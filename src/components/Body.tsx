@@ -1,16 +1,19 @@
 import { useEffect, useState } from "react";
-import { DOMMessage, DOMMessageResponse } from "../types";
+import { useChromeStorageLocal } from "use-chrome-storage";
+import { SEARCH_STRING_SUBSTITUTE } from "../chromeServices/background";
+import { DOMMessage, DOMMessageResponse, Site } from "../types";
+import { handleChromeError } from "./functions";
 import Store from "./Store";
-
-export interface Site {
-    name: string;
-    url: string;
-    searchUrl: string;
-}
-
+import Button from "./ui/Button";
+import Input from "./ui/Input";
+// import { sites } from "./Editing/EditingBody";
 const Body = () => {
     const [searchTerm, setSearchTerm] = useState("");
-    const [sites, setSites] = useState<Site[]>([]);
+    // const [sites, setSites] = useState<Site[]>([]);
+    
+    const [sites, setSites, _, __]: [Site[], any, any, any] =
+        useChromeStorageLocal("sites", []);
+    console.log({ sites, setSites });
     useEffect(() => {
         chrome.tabs &&
             chrome.tabs.query(
@@ -19,23 +22,27 @@ const Body = () => {
                     currentWindow: true,
                 },
                 (tabs) => {
-                    // Callback function
-                    chrome.tabs.sendMessage(
-                        tabs[0].id || 0,
-                        { type: "OPEN_POPUP" } as DOMMessage,
-                        (response: DOMMessageResponse) => {
-                            console.log(response);
+                    if (chrome.runtime.lastError) {
+                        handleChromeError(chrome.runtime.lastError);
+                    } else {
+                        // Callback function
+                        chrome.tabs.sendMessage(
+                            tabs[0].id || 0,
+                            { type: "GET_SELECTED" } as DOMMessage,
+                            (response: DOMMessageResponse) => {
+                                console.log(response);
 
-                            if (!response) console.log("error");
-                            else {
-                                setSearchTerm(response.payload.text || "");
-                                console.log(response.payload.sites);
-                                setSites(
-                                    response.payload.sites || []
-                                );
+                                if (chrome.runtime.lastError) {
+                                    handleChromeError(chrome.runtime.lastError);
+                                }
+                                else {
+                                    setSearchTerm(response.payload.text || "");
+                                    // console.log(response.payload.sites);
+                                    // setSites(response.payload.sites || []);
+                                }
                             }
-                        }
-                    );
+                        );
+                    }
                 }
             );
     }, []);
@@ -43,52 +50,100 @@ const Body = () => {
     const visitStoreHandler = (index: number) => {
         const site = sites[index];
         // window.open(
-        //     `${site.searchUrl}${encodeURIComponent(searchTerm)}`,
+        //     site.searchUrl.replaceAll(SEARCH_STRING_SUBSTITUTE, encodeURIComponent(selected))},
         //     "_blank"
         // );
+
+        const url = searchTerm
+            ? site.searchUrl.replaceAll(
+                  SEARCH_STRING_SUBSTITUTE,
+                  encodeURIComponent(searchTerm.trim().toLowerCase())
+              )
+            : site.url;
+
         chrome.tabs &&
             chrome.tabs.create({
-                url: `${site.searchUrl}${encodeURIComponent(searchTerm)}`,
+                url,
                 active: false,
             });
     };
 
     const visitAllHandler = (event: React.MouseEvent<HTMLButtonElement>) => {
         event.preventDefault();
-        sites.forEach((_, index) => visitStoreHandler(index));
+        sites.forEach(
+            (site, index) => site.enabled && visitStoreHandler(index)
+        );
     };
 
+    const toggleStoreHandler = (index: number) => {
+        // setSites((prevState) => {
+        //     const newState = [...prevState];
+        //     newState[index].enabled = !newState[index].enabled;
+        //     return newState;
+        // });
+        const site = sites[index];
+        site.enabled = !site.enabled;
+        chrome.tabs &&
+            chrome.tabs.query(
+                {
+                    active: true,
+                    currentWindow: true,
+                },
+                (tabs) => {
+                    if (chrome.runtime.lastError) {
+                        handleChromeError(chrome.runtime.lastError);
+                    } else {
+                        const tabId = tabs[0].id || 0;
+                        chrome.tabs.sendMessage(
+                            tabId,
+                            {
+                                type: `EDIT_SITE`,
+                                payload: { site, index },
+                            } as DOMMessage,
+                            (response: DOMMessageResponse) => {
+                                if (chrome.runtime.lastError) {
+                                    handleChromeError(chrome.runtime.lastError);
+                                }
+                            }
+                        );
+                    }
+                }
+            );
+    };
     return (
         <div className="body my-2">
             <div className="search-container flex">
-                <form className=" flex">
-                    <input
-                        className="w-full bg-gray-100 p-2 rounded-lg border-2 border-indigo-500 shadow-md focus:outline-none focus:border-indigo-600 mr-1"
+                <form className="w-full flex">
+                    <Input
                         id="search-input"
                         type="text"
                         placeholder="Search terms"
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            setSearchTerm(e.target.value)
+                        }
                     />
-                    <button
-                        onClick={visitAllHandler}
-                        className="w-32 bg-gray-100 hover:bg-gray-200 p-2 rounded-lg border-2 border-indigo-500 shadow-md hover:outline-none hover:border-indigo-600"
-                    >
+                    <Button classes="w-32" onClick={visitAllHandler}>
                         Open all
-                    </button>
+                    </Button>
                 </form>
             </div>
             <div className="sites flex flex-wrap items-center justify-around">
-                {sites.map((site, index) => (
-                    <Store
-                        index={index}
-                        site={site}
-                        key={index}
-                        visitStoreHandler={visitStoreHandler}
-                    />
-                ))}
+                {sites &&
+                    sites.map((site, index) => (
+                        <Store
+                            index={index}
+                            site={site}
+                            key={index}
+                            visitStoreHandler={visitStoreHandler}
+                            toggleStoreHandler={toggleStoreHandler}
+                        />
+                    ))}
             </div>
-            <div className="text-center"></div>
+            <p className="text-sm text-center text-gray-800 italic">
+                {" "}
+                Right click icon to toggle auto-open{" "}
+            </p>
         </div>
     );
 };

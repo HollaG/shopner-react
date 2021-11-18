@@ -4,6 +4,9 @@
   "private": true,
   "dependencies": {
     "@craco/craco": "^6.4.0",
+    "@fortawesome/fontawesome-svg-core": "^1.2.36",
+    "@fortawesome/free-solid-svg-icons": "^5.15.4",
+    "@fortawesome/react-fontawesome": "^0.1.16",
     "@testing-library/jest-dom": "^5.15.0",
     "@testing-library/react": "^11.2.7",
     "@testing-library/user-event": "^12.8.3",
@@ -20,7 +23,7 @@
   },
   "scripts": {
     "start": "craco start",
-    "build": "INLINE_RUNTIME_CHUNK=false craco build",
+    "build": "cross-env INLINE_RUNTIME_CHUNK=false craco build",
     "test": "craco test",
     "eject": "react-scripts eject"
   },
@@ -45,6 +48,7 @@
   "devDependencies": {
     "@types/chrome": "0.0.163",
     "autoprefixer": "^9.8.8",
+    "cross-env": "^7.0.3",
     "postcss": "^7.0.39",
     "tailwindcss": "npm:@tailwindcss/postcss7-compat@^2.2.17"
   }
