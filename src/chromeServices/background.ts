@@ -75,6 +75,12 @@ const sites: Site[] = [
         searchUrl: `https://www.newegg.com/global/sg-en/p/pl?d=${SEARCH_STRING_SUBSTITUTE}`,
         enabled: true,
     },
+    {
+        name: "ASOS",
+        url: "https://www.asos.com",
+        searchUrl: `https://www.asos.com/search/?q=${SEARCH_STRING_SUBSTITUTE}`,
+        enabled: true,
+    }
 ];
 sites.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
 export {};
