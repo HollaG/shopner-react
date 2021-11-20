@@ -64,8 +64,9 @@ const Body = () => {
               )
             : site.url;
 
-            // Open if site url doesn't start with the url to open
-        chrome.tabs && !currentUrl.startsWith(url) && 
+        // Open if site url doesn't start with the url to open
+        chrome.tabs &&
+            !currentUrl.startsWith(url) &&
             chrome.tabs.create({
                 url,
                 active: false,
@@ -74,12 +75,11 @@ const Body = () => {
 
     const visitAllHandler = (event: React.MouseEvent<HTMLButtonElement>) => {
         event.preventDefault();
-        
+
         sites.forEach(
-            // Only open if the site is enabled 
+            // Only open if the site is enabled
             // TODO: and it doesn't include the term that the user is searching for? !currentUrl.includes(encodeURIComponent(searchTerm.trim().toLowerCase())) &&
-            (site, index) =>
-                site.enabled && visitStoreHandler(index)
+            (site, index) => site.enabled && visitStoreHandler(index)
         );
     };
 
@@ -149,8 +149,7 @@ const Body = () => {
                     ))}
             </div>
             <p className="text-sm text-center text-gray-800 italic">
-                {" "}
-                Right click icon to toggle auto-open{" "}
+                Right click icon to toggle auto-open
             </p>
         </div>
     );

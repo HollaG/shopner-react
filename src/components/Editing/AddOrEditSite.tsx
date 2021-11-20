@@ -1,19 +1,21 @@
 import { useEffect, useState } from "react";
-import { CUSTOM_SEARCH_INPUT, SEARCH_STRING_SUBSTITUTE } from "../../chromeServices/background";
+import {
+    CUSTOM_SEARCH_INPUT,
+    SEARCH_STRING_SUBSTITUTE,
+} from "../../chromeServices/background";
 import { DOMMessage, DOMMessageResponse, SiteStruct } from "../../types";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
 
-
-
 const AddOrEditSite: React.FC<{
     isEditing: boolean;
+    explainer?: string;
     site?: SiteStruct;
     index?: number;
     name: string;
     url: string;
     submitHandler: (site: SiteStruct, index?: number) => void;
-}> = ({ isEditing, site, index, name, url, submitHandler }) => {
+}> = ({ isEditing, site, index, name, url, submitHandler, explainer }) => {
     const [urlValue, setUrlValue] = useState(url);
     const [nameValue, setNameValue] = useState(name);
     const formSubmitHandler = (event: React.FormEvent<HTMLFormElement>) => {
@@ -36,33 +38,32 @@ const AddOrEditSite: React.FC<{
         setUrlValue("");
 
         submitHandler({ url, searchUrl, name, enabled: true }, index);
+    };
 
-        
-
+    const nameValueChangeHandler = (
+        event: React.ChangeEvent<HTMLInputElement>
+    ) => {
+        if (event.target.value.length > 50) return;
+        setNameValue(event.target.value);
     };
 
     return (
         <form className="add-new m-2" onSubmit={formSubmitHandler}>
-            {!isEditing && (
+            {!isEditing && explainer && (
                 <div className="text-center">
-                    <p>
-                        Please search for 'azbycxdvew' in your site, then open
-                        this page in that site.
-                    </p>
+                    <p>{explainer}</p>
                 </div>
             )}
             <div className="flex align-center justify-center items-center">
                 <div className="w-1/4 flex">
                     <label htmlFor="new__name" className="self-center">
-                        Name
+                        Name (max 50)
                     </label>
                 </div>
                 <div className="w-3/4">
                     <Input
                         value={nameValue}
-                        onChange={(
-                            event: React.ChangeEvent<HTMLInputElement>
-                        ) => setNameValue(event.target.value)}
+                        onChange={nameValueChangeHandler}
                         id="new__name"
                     />
                 </div>
@@ -70,7 +71,7 @@ const AddOrEditSite: React.FC<{
             <div className="flex align-center justify-center my-1 items-center">
                 <div className="w-1/4 flex">
                     <label htmlFor="new__search" className="self-center">
-                        Search url
+                        Search URL
                     </label>
                 </div>
                 <div className="w-3/4">

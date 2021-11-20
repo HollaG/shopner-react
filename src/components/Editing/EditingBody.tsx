@@ -93,6 +93,18 @@ const EditingBody = () => {
             );
     }, []);
 
+
+    const [explainer, setExplainer] = useState("Please search for \"azbycxdvew\" in the website of your choice. Afterwards, the correct search URL will be auto-filled for you.");
+    const showAddNewSiteHandler = async () => {
+        setShowAddNew((prev) => !prev);
+        try { 
+            await navigator.clipboard.writeText('azbycxdvew')
+            setExplainer("Please search for \"azbycxdvew\" (copied to your clipboard) in the website of your choice. Afterwards, the correct search URL will be auto-filled for you.");
+        } catch (e) {
+            console.log(e) // copying failed
+        }
+    }
+
     const addSubmitHandler = (site: SiteStruct, index?: number) => {
         chrome.tabs &&
             chrome.tabs.query(
@@ -176,7 +188,7 @@ const EditingBody = () => {
                 >
                     Import
                 </Button>
-                <Button onClick={() => setShowAddNew((prev) => !prev)}>
+                <Button onClick={() => showAddNewSiteHandler()}>
                     Add new site
                 </Button>
             </div>
@@ -186,6 +198,7 @@ const EditingBody = () => {
                     name={nameValue}
                     url={urlValue}
                     isEditing={false}
+                    explainer={explainer}
                 />
             )}
             {showImport && (

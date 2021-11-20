@@ -53,7 +53,7 @@ function App() {
                     {isEditing ? <EditingBody /> : <Body />}
                     <div className="text-center">
                         <Button onClick={() => setIsEditing((prev) => !prev)}>
-                            Manage links
+                            {isEditing ? "Go to home" : "Manage links"}
                         </Button>
                     </div>
                 </>
