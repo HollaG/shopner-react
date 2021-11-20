@@ -1,18 +1,20 @@
-export interface Site {
+export interface SiteStruct {
     name: string;
     url: string;
     searchUrl: string;
     enabled: boolean;
     index?: number;
+    icon?: string;
 }
 
 export interface DOMMessageResponse {
     
     payload: {
         text?: string,
-        sites?: Site[],
+        sites?: SiteStruct[],
         title?: string,
         searchUrl?: string,
+        currentUrl? :string,
         [key:string]:any
     }
 }

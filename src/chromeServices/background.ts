@@ -6,7 +6,7 @@
 //     });
 
 import { handleChromeError } from "../components/functions";
-import { DOMMessage, DOMMessageResponse, Site } from "../types";
+import { DOMMessage, DOMMessageResponse, SiteStruct } from "../types";
 
 // });
 
@@ -14,7 +14,7 @@ export const MENUITEM__OPEN_ALL = "context__open_all";
 export const SEARCH_STRING_SUBSTITUTE = "<<<SEARCH___STRING>>>";
 export const CUSTOM_SEARCH_INPUT = "azbycxdvew";
 
-const sites: Site[] = [
+const sites: SiteStruct[] = [
     {
         name: "Shopee",
         url: "https://shopee.sg",
@@ -23,13 +23,13 @@ const sites: Site[] = [
     },
     {
         name: "Lazada",
-        url: "https://lazada.sg",
+        url: "https://www.lazada.sg",
         searchUrl: `https://www.lazada.sg/catalog/?q=${SEARCH_STRING_SUBSTITUTE}`,
         enabled: true,
     },
     {
         name: "Qoo10",
-        url: "https://qoo10.sg",
+        url: "https://www.qoo10.sg",
         searchUrl: `https://www.qoo10.sg/s/?keyword=${SEARCH_STRING_SUBSTITUTE}`,
         enabled: true,
     },
@@ -80,16 +80,17 @@ const sites: Site[] = [
         url: "https://www.asos.com",
         searchUrl: `https://www.asos.com/search/?q=${SEARCH_STRING_SUBSTITUTE}`,
         enabled: true,
-    }
+    },
 ];
 sites.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
 export {};
 
-const createContextMenu = (sites: Site[]) => {
-
-    // Expect an unsorted array of 
+const createContextMenu = (sites: SiteStruct[]) => {
+    // Expect an unsorted array of
     // Sort by name
-    const sorted = sites.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+    const sorted = sites.sort((a, b) =>
+        a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+    );
 
     chrome.contextMenus.create({
         title: "Search all sites",
@@ -113,7 +114,7 @@ const createContextMenu = (sites: Site[]) => {
             checked: site.enabled,
         });
     });
-}
+};
 
 // Listen to storage changes so we can update the "enabled" property of the sites
 chrome.storage &&
@@ -125,11 +126,8 @@ chrome.storage &&
             // Delete all the old menu items and add again
             // Cannot just modify because when the user adds / remove sites, the indexes might change
             // Todo: possible work on assigning a unique ID to each site which would fix this issue
-            chrome.contextMenus.removeAll()
+            chrome.contextMenus.removeAll();
             createContextMenu(changes.sites.newValue || []);
-
-
-            
         }
         return true;
     });
@@ -160,15 +158,15 @@ chrome.runtime &&
             // Check if the local storage already contains stuff (i.e. we already loaded it before)
             // If it already has stuff, don't add anything
             chrome.storage.local.get("sites", function (result) {
-                const userSites: Site[] = result.sites || sites;
+                const userSites: SiteStruct[] = result.sites || sites;
                 // if (result.sites) {
                 //     console.log("Found sites already set:", {
                 //         sites: result.sites,
                 //     });
                 // } else {
-                    chrome.storage.local.set({ sites }, function () {
-                        console.log("Value is set to", { sites });
-                    });
+                chrome.storage.local.set({ sites }, function () {
+                    console.log("Value is set to", { sites });
+                });
                 // }
 
                 userSites.forEach((site, index) => {
@@ -215,6 +213,13 @@ chrome.contextMenus &&
                 (response: DOMMessageResponse) => {
                     const userSites = response.payload.sites;
                     const selected = response.payload.text;
+                    const encodedSelected = selected
+                        ? encodeURIComponent(selected.trim().toLowerCase())
+                        : "";
+                    const currentUrl = response.payload.currentUrl || "";
+                    const { origin } = new URL(
+                        currentUrl?.toLowerCase().trim() || ""
+                    );
                     if (info.menuItemId === MENUITEM__OPEN_ALL) {
                         // Open all tabs
                         userSites &&
@@ -222,13 +227,18 @@ chrome.contextMenus &&
                                 const url = selected
                                     ? site.searchUrl.replaceAll(
                                           SEARCH_STRING_SUBSTITUTE,
-                                          encodeURIComponent(
-                                              selected.trim().toLowerCase()
-                                          )
+                                          encodedSelected
                                       )
                                     : site.url;
 
-                                site.enabled &&
+                                // Only open if the site is enabled 
+                                // TODO and it doesn't include the term that the user is searching for 
+                                // && !currentUrl.includes(encodedSelected);
+
+                                // and the URL doesn't start with the URL we want to open
+                                const shouldOpen =
+                                    site.enabled && !currentUrl.startsWith(url)
+                                shouldOpen &&
                                     chrome.tabs.create({
                                         url,
                                         active: false,
@@ -281,14 +291,11 @@ chrome.tabs &&
                 });
             } else {
                 // Valid url
-                chrome.action.setIcon(
-                    {
-                        path: "/icons/logo16.png",
+                chrome.action.setIcon({
+                    path: "/icons/logo16.png",
 
-                        tabId: info.tabId,
-                    },
-                    
-                );
+                    tabId: info.tabId,
+                });
             }
         });
     });

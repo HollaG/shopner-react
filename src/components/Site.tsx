@@ -1,8 +1,9 @@
-import { Site } from "../types";
+import { SiteStruct } from "../types";
+import ImageWithFallback from "./ui/ImageWithFallback";
 
-const Store: React.FC<{
+const Site: React.FC<{
     index: number;
-    site: Site;
+    site: SiteStruct;
     visitStoreHandler: (index: number) => void;
     toggleStoreHandler: (index: number) => void;
 }> = ({ index, site, visitStoreHandler, toggleStoreHandler }) => {
@@ -20,12 +21,13 @@ const Store: React.FC<{
             onClick={() => visitStoreHandler(index)}
             onContextMenu={disableHandler}
         >
-            <img
+            
+            <ImageWithFallback
                 className={`w-12 h-12 object-contain`}
                 src={`${site.url}/favicon.ico`}
+                fallback={`https://www.google.com/s2/favicons?domain_url=${site.url}`}
                 alt={site.name}
             />
-
             <div className={`text-center`}>
                 <p>{site.name}</p>
                 <p className={site.enabled ? "" : "text-red-500"}>
@@ -36,4 +38,4 @@ const Store: React.FC<{
     );
 };
 
-export default Store;
+export default Site;

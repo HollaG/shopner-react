@@ -1,18 +1,19 @@
 import { useEffect, useState } from "react";
 import { useChromeStorageLocal } from "use-chrome-storage";
 import { SEARCH_STRING_SUBSTITUTE } from "../chromeServices/background";
-import { DOMMessage, DOMMessageResponse, Site } from "../types";
+import { DOMMessage, DOMMessageResponse, SiteStruct } from "../types";
 import { handleChromeError } from "./functions";
-import Store from "./Store";
+import Site from "./Site";
 import Button from "./ui/Button";
 import Input from "./ui/Input";
 // import { sites } from "./Editing/EditingBody";
 const Body = () => {
     const [searchTerm, setSearchTerm] = useState("");
     // const [sites, setSites] = useState<Site[]>([]);
-    
-    const [sites, setSites, _, __]: [Site[], any, any, any] =
+
+    const [sites, setSites, _, __]: [SiteStruct[], any, any, any] =
         useChromeStorageLocal("sites", []);
+    const [currentUrl, setCurrentUrl] = useState("");
     console.log({ sites, setSites });
     useEffect(() => {
         chrome.tabs &&
@@ -34,9 +35,11 @@ const Body = () => {
 
                                 if (chrome.runtime.lastError) {
                                     handleChromeError(chrome.runtime.lastError);
-                                }
-                                else {
+                                } else {
                                     setSearchTerm(response.payload.text || "");
+                                    setCurrentUrl(
+                                        response.payload.currentUrl || ""
+                                    );
                                     // console.log(response.payload.sites);
                                     // setSites(response.payload.sites || []);
                                 }
@@ -61,7 +64,8 @@ const Body = () => {
               )
             : site.url;
 
-        chrome.tabs &&
+            // Open if site url doesn't start with the url to open
+        chrome.tabs && !currentUrl.startsWith(url) && 
             chrome.tabs.create({
                 url,
                 active: false,
@@ -70,8 +74,12 @@ const Body = () => {
 
     const visitAllHandler = (event: React.MouseEvent<HTMLButtonElement>) => {
         event.preventDefault();
+        
         sites.forEach(
-            (site, index) => site.enabled && visitStoreHandler(index)
+            // Only open if the site is enabled 
+            // TODO: and it doesn't include the term that the user is searching for? !currentUrl.includes(encodeURIComponent(searchTerm.trim().toLowerCase())) &&
+            (site, index) =>
+                site.enabled && visitStoreHandler(index)
         );
     };
 
@@ -124,14 +132,14 @@ const Body = () => {
                         }
                     />
                     <Button classes="w-32" onClick={visitAllHandler}>
-                        Open all
+                        Auto-open
                     </Button>
                 </form>
             </div>
             <div className="sites flex flex-wrap items-center justify-around">
                 {sites &&
                     sites.map((site, index) => (
-                        <Store
+                        <Site
                             index={index}
                             site={site}
                             key={index}

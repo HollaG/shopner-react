@@ -1,5 +1,5 @@
 import { handleChromeError } from "../components/functions";
-import { DOMMessage, DOMMessageResponse, Site } from "../types";
+import { DOMMessage, DOMMessageResponse, SiteStruct } from "../types";
 
 // Function called when a new message is received
 const messagesFromReactAppListener = (
@@ -39,7 +39,7 @@ const messagesFromReactAppListener = (
                 console.log("MESSAGE TYPE", msg.type);
                 switch (msg.type) {
                     case "GET_SELECTED": {
-                        sendResponse({ payload: { text: selected } });
+                        sendResponse({ payload: { text: selected, currentUrl: document.URL } });
                         break;
                     }
                     case "GET_SITE_INFO": {
@@ -54,7 +54,7 @@ const messagesFromReactAppListener = (
                     }
                     case "ADD_SITE": {
                         console.log("SWITCH ADD SITE");
-                        const payload: Site = msg.payload;
+                        const payload: SiteStruct = msg.payload;
                         const sites = [...result.sites, payload].sort((a, b) =>
                             a.name.localeCompare(b.name)
                         );
@@ -114,6 +114,7 @@ const messagesFromReactAppListener = (
                             payload: {
                                 text: selected,
                                 sites: result.sites,
+                                currentUrl: document.URL,
                             },
                         };
                         sendResponse(response);
@@ -130,6 +131,7 @@ const messagesFromReactAppListener = (
  */
 chrome.runtime &&
     chrome.runtime.onMessage.addListener(messagesFromReactAppListener);
+
 
 // chrome.contextMenus.onClicked.addListener(function (info, tab) {
 //     chrome.storage.local.get("sites", function (result) {

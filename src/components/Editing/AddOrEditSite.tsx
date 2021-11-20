@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { CUSTOM_SEARCH_INPUT, SEARCH_STRING_SUBSTITUTE } from "../../chromeServices/background";
-import { DOMMessage, DOMMessageResponse, Site } from "../../types";
+import { DOMMessage, DOMMessageResponse, SiteStruct } from "../../types";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
 
@@ -8,11 +8,11 @@ import Input from "../ui/Input";
 
 const AddOrEditSite: React.FC<{
     isEditing: boolean;
-    site?: Site;
+    site?: SiteStruct;
     index?: number;
     name: string;
     url: string;
-    submitHandler: (site: Site, index?: number) => void;
+    submitHandler: (site: SiteStruct, index?: number) => void;
 }> = ({ isEditing, site, index, name, url, submitHandler }) => {
     const [urlValue, setUrlValue] = useState(url);
     const [nameValue, setNameValue] = useState(name);

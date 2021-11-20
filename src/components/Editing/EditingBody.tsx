@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useChromeStorageLocal } from "use-chrome-storage";
 import { SEARCH_STRING_SUBSTITUTE } from "../../chromeServices/background";
-import { DOMMessage, DOMMessageResponse, Site } from "../../types";
+import { DOMMessage, DOMMessageResponse, SiteStruct } from "../../types";
 import { handleChromeError } from "../functions";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
@@ -61,8 +61,9 @@ import SiteRow from "./SiteRow";
 const EditingBody = () => {
     const [showAddNew, setShowAddNew] = useState(false);
 
-    const [sites, setSites, _, __]: [Site[], any, any, any] =
+    const [sites, setSites, _, __]: [SiteStruct[], any, any, any] =
         useChromeStorageLocal("sites", []);
+        console.log({sites}, "SITES IN THE EDITINGBODSY") 
     const [nameValue, setNameValue] = useState("");
     const [urlValue, setUrlValue] = useState("");
 
@@ -92,7 +93,7 @@ const EditingBody = () => {
             );
     }, []);
 
-    const addSubmitHandler = (site: Site, index?: number) => {
+    const addSubmitHandler = (site: SiteStruct, index?: number) => {
         chrome.tabs &&
             chrome.tabs.query(
                 {
@@ -139,7 +140,7 @@ const EditingBody = () => {
                 />
             )}
             {sites &&
-                sites.map((site: Site, index) => (
+                sites.map((site: SiteStruct, index) => (
                     <SiteRow key={index} index={index} site={site} />
                 ))}
         </div>
