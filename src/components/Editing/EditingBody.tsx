@@ -63,7 +63,7 @@ const EditingBody = () => {
 
     const [sites, setSites, _, __]: [SiteStruct[], any, any, any] =
         useChromeStorageLocal("sites", []);
-        console.log({sites}, "SITES IN THE EDITINGBODSY") 
+    console.log({ sites }, "SITES IN THE EDITINGBODSY");
     const [nameValue, setNameValue] = useState("");
     const [urlValue, setUrlValue] = useState("");
 
@@ -124,9 +124,58 @@ const EditingBody = () => {
             );
     };
 
+    const exportHandler = async () => {
+        // Copy the site JSON string to clipboard
+        try {
+            await navigator.clipboard.writeText(JSON.stringify(sites));
+            alert("Copied to clipboard!");
+        } catch (e) {
+            alert(e);
+            console.log(e);
+        }
+    };
+
+    const [showImport, setShowImport] = useState(false);
+    const [importString, setImportString] = useState("");
+    const importHandler = () => {
+        try {
+            const parsed = JSON.parse(importString);
+            chrome.tabs &&
+                chrome.tabs.query(
+                    {
+                        active: true,
+                        currentWindow: true,
+                    },
+                    (tabs) => {
+                        // Callback function
+                        chrome.tabs.sendMessage(
+                            tabs[0].id || 0,
+                            { type: "IMPORT", payload: parsed } as DOMMessage,
+                            (response: DOMMessageResponse) => {
+                                console.log(response);
+                                if (chrome.runtime.lastError) {
+                                    handleChromeError(chrome.runtime.lastError);
+                                } else {
+                                    setShowImport(false);
+                                }
+                            }
+                        );
+                    }
+                );
+        } catch (e) {
+            alert("Invalid JSON!");
+        }
+    };
     return (
         <div className="body my-2">
-            <div className="text-center">
+            <div className="flex justify-center buttons mb-2">
+                <Button onClick={() => exportHandler()}>Export</Button>
+                <Button
+                    classes="mx-1"
+                    onClick={() => setShowImport((prev) => !prev)}
+                >
+                    Import
+                </Button>
                 <Button onClick={() => setShowAddNew((prev) => !prev)}>
                     Add new site
                 </Button>
@@ -138,6 +187,20 @@ const EditingBody = () => {
                     url={urlValue}
                     isEditing={false}
                 />
+            )}
+            {showImport && (
+                <div>
+                    <Input
+                        placeholder="Paste the JSON string here"
+                        value={importString}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            setImportString(e.target.value)
+                        }
+                    />
+                    <div className="flex justify-center">
+                        <Button onClick={() => importHandler()}>Import</Button>
+                    </div>
+                </div>
             )}
             {sites &&
                 sites.map((site: SiteStruct, index) => (
