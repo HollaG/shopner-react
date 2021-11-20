@@ -118,6 +118,10 @@ const Body = () => {
                 }
             );
     };
+
+    const saveEnabledHandler = () => {
+        
+    }
     return (
         <div className="body my-2">
             <div className="search-container flex">
@@ -131,10 +135,14 @@ const Body = () => {
                             setSearchTerm(e.target.value)
                         }
                     />
-                    <Button classes="w-32" onClick={visitAllHandler}>
+                    <Button onClick={visitAllHandler}>
                         Auto-open
                     </Button>
                 </form>
+            </div>
+            <div className="preset-container flex justify-between my-1">
+                <div></div>
+                <Button classes="align-end"> Save preset </Button>
             </div>
             <div className="sites flex flex-wrap items-center justify-around">
                 {sites &&

@@ -123,6 +123,17 @@ const messagesFromReactAppListener = (
                         });
                         break;
                     }
+                    case "SAVE_PRESET": {
+                        chrome.storage.local.get("sites", function(result) {
+                            const sites = result.sites;
+                            chrome.storage.local.get("presets", function(presetResult) {
+                                const presets = presetResult.presets
+                                let newPresets = {}
+                                
+                            })
+                        })
+                        break;
+                    }
                     default: {
                         const response: DOMMessageResponse = {
                             payload: {

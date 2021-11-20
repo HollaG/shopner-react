@@ -5,7 +5,7 @@
 //         contexts: ["selection"],
 //     });
 
-import { handleChromeError } from "../components/functions";
+import { handleChromeError, uid } from "../components/functions";
 import { DOMMessage, DOMMessageResponse, SiteStruct } from "../types";
 
 // });
@@ -13,7 +13,9 @@ import { DOMMessage, DOMMessageResponse, SiteStruct } from "../types";
 export const MENUITEM__OPEN_ALL = "context__open_all";
 export const SEARCH_STRING_SUBSTITUTE = "<<<SEARCH___STRING>>>";
 export const CUSTOM_SEARCH_INPUT = "azbycxdvew";
-const sites: SiteStruct[] = JSON.parse('[{"enabled":true,"name":"Aliexpress","searchUrl":"https://www.aliexpress.com/wholesale?catid=0&initiative_id=sb_20211119232949&searchtext=<<<SEARCH___STRING>>>","url":"https://www.aliexpress.com"},{"enabled":true,"name":"Amazon (SG)","searchUrl":"https://www.amazon.sg/s?k=<<<SEARCH___STRING>>>&ref=nb_sb_noss","url":"https://www.amazon.sg"},{"enabled":true,"name":"ASOS","searchUrl":"https://www.asos.com/search/?q=<<<SEARCH___STRING>>>","url":"https://www.asos.com"},{"enabled":true,"name":"Carousell","searchUrl":"https://www.carousell.sg/search/<<<SEARCH___STRING>>>?addrecent=true&canchangekeyword=true&includesuggestions=true&searchid=bhhiy7","url":"https://www.carousell.sg"},{"enabled":true,"name":"eBay (SG)","searchUrl":"https://www.ebay.com.sg/sch/i.html?_from=r40&_trksid=m570.l1313&_nkw=<<<SEARCH___STRING>>>&_sacat=0","url":"https://www.ebay.com.sg"},{"enabled":true,"name":"ezbuy","searchUrl":"https://ezbuy.sg/category/?keywords=<<<SEARCH___STRING>>>","url":"https://ezbuy.sg"},{"enabled":true,"name":"Lazada","searchUrl":"https://www.lazada.sg/catalog/?q=<<<SEARCH___STRING>>>&_keyori=ss&from=input&spm=a2o42.home.search.go.654346b54ocwyy","url":"https://www.lazada.sg"},{"enabled":true,"name":"Newegg (SG)","searchUrl":"https://www.newegg.com/global/sg-en/p/pl?d=<<<SEARCH___STRING>>>","url":"https://www.newegg.com"},{"enabled":true,"name":"Qoo10","searchUrl":"https://www.qoo10.sg/s/<<<SEARCH___STRING>>>?keyword=<<<SEARCH___STRING>>>&keyword_auto_change=","url":"https://www.qoo10.sg"},{"enabled":true,"name":"Shopee","searchUrl":"https://shopee.sg/search?keyword=<<<SEARCH___STRING>>>","url":"https://shopee.sg"},{"enabled":true,"name":"Zalora","searchUrl":"https://www.zalora.sg/catalog/?q=<<<SEARCH___STRING>>>","url":"https://www.zalora.sg"}]')
+const sites: SiteStruct[] = JSON.parse(
+    '[{"enabled":true,"name":"Aliexpress","searchUrl":"https://www.aliexpress.com/wholesale?catid=0&initiative_id=sb_20211119232949&searchtext=<<<SEARCH___STRING>>>","url":"https://www.aliexpress.com"},{"enabled":true,"name":"Amazon (SG)","searchUrl":"https://www.amazon.sg/s?k=<<<SEARCH___STRING>>>&ref=nb_sb_noss","url":"https://www.amazon.sg"},{"enabled":true,"name":"ASOS","searchUrl":"https://www.asos.com/search/?q=<<<SEARCH___STRING>>>","url":"https://www.asos.com"},{"enabled":true,"name":"Carousell","searchUrl":"https://www.carousell.sg/search/<<<SEARCH___STRING>>>?addrecent=true&canchangekeyword=true&includesuggestions=true&searchid=bhhiy7","url":"https://www.carousell.sg"},{"enabled":true,"name":"eBay (SG)","searchUrl":"https://www.ebay.com.sg/sch/i.html?_from=r40&_trksid=m570.l1313&_nkw=<<<SEARCH___STRING>>>&_sacat=0","url":"https://www.ebay.com.sg"},{"enabled":true,"name":"ezbuy","searchUrl":"https://ezbuy.sg/category/?keywords=<<<SEARCH___STRING>>>","url":"https://ezbuy.sg"},{"enabled":true,"name":"Lazada","searchUrl":"https://www.lazada.sg/catalog/?q=<<<SEARCH___STRING>>>&_keyori=ss&from=input&spm=a2o42.home.search.go.654346b54ocwyy","url":"https://www.lazada.sg"},{"enabled":true,"name":"Newegg (SG)","searchUrl":"https://www.newegg.com/global/sg-en/p/pl?d=<<<SEARCH___STRING>>>","url":"https://www.newegg.com"},{"enabled":true,"name":"Qoo10","searchUrl":"https://www.qoo10.sg/s/<<<SEARCH___STRING>>>?keyword=<<<SEARCH___STRING>>>&keyword_auto_change=","url":"https://www.qoo10.sg"},{"enabled":true,"name":"Shopee","searchUrl":"https://shopee.sg/search?keyword=<<<SEARCH___STRING>>>","url":"https://shopee.sg"},{"enabled":true,"name":"Zalora","searchUrl":"https://www.zalora.sg/catalog/?q=<<<SEARCH___STRING>>>","url":"https://www.zalora.sg"}]'
+);
 // const sites: SiteStruct[] = [
 //     {
 //         name: "Shopee",
@@ -83,6 +85,10 @@ const sites: SiteStruct[] = JSON.parse('[{"enabled":true,"name":"Aliexpress","se
 //     },
 // ];
 sites.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+sites.map((site) => {
+    site.id = uid();
+    return site;
+});
 export {};
 
 const createContextMenu = (sites: SiteStruct[]) => {
@@ -231,13 +237,13 @@ chrome.contextMenus &&
                                       )
                                     : site.url;
 
-                                // Only open if the site is enabled 
-                                // TODO and it doesn't include the term that the user is searching for 
+                                // Only open if the site is enabled
+                                // TODO and it doesn't include the term that the user is searching for
                                 // && !currentUrl.includes(encodedSelected);
 
                                 // and the URL doesn't start with the URL we want to open
                                 const shouldOpen =
-                                    site.enabled && !currentUrl.startsWith(url)
+                                    site.enabled && !currentUrl.startsWith(url);
                                 shouldOpen &&
                                     chrome.tabs.create({
                                         url,

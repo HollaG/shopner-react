@@ -5,6 +5,11 @@ export interface SiteStruct {
     enabled: boolean;
     index?: number;
     icon?: string;
+    id?: string;
+}
+
+export interface PresetStruct {
+
 }
 
 export interface DOMMessageResponse {
