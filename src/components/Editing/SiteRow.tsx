@@ -6,48 +6,20 @@ import {
     SEARCH_STRING_SUBSTITUTE,
 } from "../../chromeServices/background";
 import { DOMMessage, DOMMessageResponse, SiteStruct } from "../../types";
-import { handleChromeError } from "../functions";
+import { handleChromeError, sendMessage } from "../functions";
 import ImageWithFallback from "../ui/ImageWithFallback";
 import AddOrEditSite from "./AddOrEditSite";
 
-const SiteRow: React.FC<{ site: SiteStruct }> = ({
-    site,
-   
-}) => {
+const SiteRow: React.FC<{ site: SiteStruct }> = ({ site }) => {
     const [editing, setEditing] = useState(false);
-    
+
     const handleToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
         // Send message to background script to toggle 'enabled' property
         site.enabled = e.target.checked;
-        console.log(e.target.checked);
-        chrome.tabs &&
-            chrome.tabs.query(
-                {
-                    active: true,
-                    currentWindow: true,
-                },
-                (tabs) => {
-                    if (chrome.runtime.lastError) {
-                        handleChromeError(chrome.runtime.lastError);
-                    } else {
-                        // Callback function
-                        chrome.tabs.sendMessage(
-                            tabs[0].id || 0,
-                            {
-                                type: "EDIT_SITE",
-                                payload: { site },
-                            } as DOMMessage,
-                            (response: DOMMessageResponse) => {
-                                console.log(response);
-                                // setChecked(e.target.checked);
-                                if (!response) console.log("error");
-                                else {
-                                }
-                            }
-                        );
-                    }
-                }
-            );
+        sendMessage({
+            type: "EDIT_SITE",
+            payload: { site },
+        }).catch(console.log);
     };
 
     const handleEdit = () => {
@@ -62,64 +34,20 @@ const SiteRow: React.FC<{ site: SiteStruct }> = ({
         );
         if (confirm) {
             // Delete the site
-            chrome.tabs &&
-                chrome.tabs.query(
-                    {
-                        active: true,
-                        currentWindow: true,
-                    },
-                    (tabs) => {
-                        // Callback function
-                        chrome.tabs.sendMessage(
-                            tabs[0].id || 0,
-                            {
-                                type: "REMOVE_SITE",
-                                payload: {
-                                    site
-                                },
-                            } as DOMMessage,
-                            (response: DOMMessageResponse) => {
-                                console.log(response);
-
-                                if (!response) console.log("error");
-                                else {
-                                }
-                            }
-                        );
-                    }
-                );
+            sendMessage({
+                type: "REMOVE_SITE",
+                payload: { site },
+            }).catch(console.log);
         }
     };
 
     const editSubmitHandler = (site: SiteStruct) => {
-        chrome.tabs &&
-            chrome.tabs.query(
-                {
-                    active: true,
-                    currentWindow: true,
-                },
-                (tabs) => {
-                    if (chrome.runtime.lastError) {
-                        handleChromeError(chrome.runtime.lastError);
-                    } else {
-                        // Callback function
-                        chrome.tabs.sendMessage(
-                            tabs[0].id || 0,
-                            {
-                                type: "EDIT_SITE",
-                                payload: { site },
-                            } as DOMMessage,
-                            (response: DOMMessageResponse) => {
-                                console.log(response);
-                                handleEdit();
-                                if (!response) console.log("error");
-                                else {
-                                }
-                            }
-                        );
-                    }
-                }
-            );
+        sendMessage({
+            type: "EDIT_SITE",
+            payload: { site },
+        }).then(() => {
+            handleEdit()
+        }).catch(console.log)
     };
 
     return (
@@ -160,7 +88,6 @@ const SiteRow: React.FC<{ site: SiteStruct }> = ({
                     submitHandler={editSubmitHandler}
                     isEditing={true}
                     site={site}
-                    
                     name={site.name}
                     url={site.searchUrl.replaceAll(
                         SEARCH_STRING_SUBSTITUTE,

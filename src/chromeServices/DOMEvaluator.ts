@@ -116,7 +116,7 @@ const messagesFromReactAppListener = (
                     break;
                 }
                 case "IMPORT": {
-                    const sites = msg.payload;
+                    const sites = msg.payload.sites;
                     chrome.storage.local.set({ sites }, function () {
                         console.log("Value is set to ", { sites });
                         const response: DOMMessageResponse = {

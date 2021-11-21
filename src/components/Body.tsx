@@ -23,40 +23,9 @@ const Body = () => {
                 setSearchTerm(response.payload.text || "");
                 setCurrentUrl(response.payload.currentUrl || "");
             })
-            .catch((e) => {
-                console.log(e.error);
-            });
+            .catch(console.log);
 
-        // chrome.tabs &&
-        //     chrome.tabs.query(
-        //         {
-        //             active: true,
-        //             currentWindow: true,
-        //         },
-        //         (tabs) => {
-        //             if (chrome.runtime.lastError) {
-        //                 handleChromeError(chrome.runtime.lastError);
-        //             } else {
-        //                 // Callback function
-        //                 chrome.tabs.sendMessage(
-        //                     tabs[0].id || 0,
-        //                     { type: "GET_SELECTED" } as DOMMessage,
-        //                     (response: DOMMessageResponse) => {
-        //                         console.log(response);
-
-        //                         if (chrome.runtime.lastError) {
-        //                             handleChromeError(chrome.runtime.lastError);
-        //                         } else {
-        //                             setSearchTerm(response.payload.text || "");
-        //                             setCurrentUrl(
-        //                                 response.payload.currentUrl || ""
-        //                             );
-        //                         }
-        //                     }
-        //                 );
-        //             }
-        //         }
-        //     );
+        
     }, []);
 
     const visitStoreHandler = (site: SiteStruct) => {
@@ -100,32 +69,11 @@ const Body = () => {
         // });
 
         site.enabled = !site.enabled;
-        chrome.tabs &&
-            chrome.tabs.query(
-                {
-                    active: true,
-                    currentWindow: true,
-                },
-                (tabs) => {
-                    if (chrome.runtime.lastError) {
-                        handleChromeError(chrome.runtime.lastError);
-                    } else {
-                        const tabId = tabs[0].id || 0;
-                        chrome.tabs.sendMessage(
-                            tabId,
-                            {
-                                type: `EDIT_SITE`,
-                                payload: { site },
-                            } as DOMMessage,
-                            (response: DOMMessageResponse) => {
-                                if (chrome.runtime.lastError) {
-                                    handleChromeError(chrome.runtime.lastError);
-                                }
-                            }
-                        );
-                    }
-                }
-            );
+        sendMessage({
+            type: `EDIT_SITE`,
+            payload: { site },
+        }).catch(console.log)
+        
     };
 
     const savePresetHandler = () => {};

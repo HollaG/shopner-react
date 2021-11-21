@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useChromeStorageLocal } from "use-chrome-storage";
 import { SEARCH_STRING_SUBSTITUTE } from "../../chromeServices/background";
 import { DOMMessage, DOMMessageResponse, SiteStruct } from "../../types";
-import { handleChromeError } from "../functions";
+import { handleChromeError, sendMessage } from "../functions";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
 import AddOrEditSite from "./AddOrEditSite";
@@ -69,29 +69,16 @@ const EditingBody = () => {
     const [urlValue, setUrlValue] = useState("");
 
     useEffect(() => {
-        chrome.tabs &&
-            chrome.tabs.query(
-                {
-                    active: true,
-                    currentWindow: true,
-                },
-                (tabs) => {
-                    // Callback function
-                    chrome.tabs.sendMessage(
-                        tabs[0].id || 0,
-                        { type: "GET_SITE_INFO" } as DOMMessage,
-                        (response: DOMMessageResponse) => {
-                            console.log(response);
-
-                            if (!response) console.log("error");
-                            else {
-                                setNameValue(response.payload.title || "");
-                                setUrlValue(response.payload.searchUrl || "");
-                            }
-                        }
-                    );
-                }
-            );
+        sendMessage({ type: "GET_SITE_INFO" })
+            .then((response) => {
+                setNameValue(
+                    response.payload.title
+                        ? response.payload.title.substring(0, 50)
+                        : ""
+                );
+                setUrlValue(response.payload.searchUrl || "");
+            })
+            .catch(console.log);
     }, []);
 
     const [explainer, setExplainer] = useState(
@@ -110,35 +97,11 @@ const EditingBody = () => {
     };
 
     const addSubmitHandler = (site: SiteStruct) => {
-        
-        chrome.tabs &&
-            chrome.tabs.query(
-                {
-                    active: true,
-                    currentWindow: true,
-                },
-                (tabs) => {
-                    if (chrome.runtime.lastError) {
-                        handleChromeError(chrome.runtime.lastError);
-                    } else {
-                        // Callback function
-                        chrome.tabs.sendMessage(
-                            tabs[0].id || 0,
-                            {
-                                type: "ADD_SITE",
-                                payload: { site },
-                            } as DOMMessage,
-                            (response: DOMMessageResponse) => {
-                                console.log(response);
-                                setShowAddNew(false);
-                                if (!response) console.log("error");
-                                else {
-                                }
-                            }
-                        );
-                    }
-                }
-            );
+        sendMessage({ type: "ADD_SITE", payload: { site } })
+            .then(() => {
+                setShowAddNew(false);
+            })
+            .catch(console.log);
     };
 
     const exportHandler = async () => {
@@ -157,28 +120,9 @@ const EditingBody = () => {
     const importHandler = () => {
         try {
             const parsed = JSON.parse(importString);
-            chrome.tabs &&
-                chrome.tabs.query(
-                    {
-                        active: true,
-                        currentWindow: true,
-                    },
-                    (tabs) => {
-                        // Callback function
-                        chrome.tabs.sendMessage(
-                            tabs[0].id || 0,
-                            { type: "IMPORT", payload: parsed } as DOMMessage,
-                            (response: DOMMessageResponse) => {
-                                console.log(response);
-                                if (chrome.runtime.lastError) {
-                                    handleChromeError(chrome.runtime.lastError);
-                                } else {
-                                    setShowImport(false);
-                                }
-                            }
-                        );
-                    }
-                );
+            sendMessage({ type: "IMPORT", payload: { sites: parsed } })
+                .then(() => setShowImport(false))
+                .catch(console.log);            
         } catch (e) {
             alert("Invalid JSON!");
         }
