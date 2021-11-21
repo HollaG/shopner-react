@@ -3,9 +3,9 @@ export interface SiteStruct {
     url: string;
     searchUrl: string;
     enabled: boolean;
-    index?: number;
+    
     icon?: string;
-    id?: string;
+    id: string;
 }
 
 export interface PresetStruct {

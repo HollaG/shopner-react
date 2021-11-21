@@ -59,6 +59,7 @@ import SiteRow from "./SiteRow";
 // ];
 
 const EditingBody = () => {
+    // Toggle for showing the 'add a new item' form
     const [showAddNew, setShowAddNew] = useState(false);
 
     const [sites, setSites, _, __]: [SiteStruct[], any, any, any] =
@@ -93,19 +94,23 @@ const EditingBody = () => {
             );
     }, []);
 
-
-    const [explainer, setExplainer] = useState("Please search for \"azbycxdvew\" in the website of your choice. Afterwards, the correct search URL will be auto-filled for you.");
+    const [explainer, setExplainer] = useState(
+        'Please search for "azbycxdvew" in the website of your choice. Afterwards, the correct search URL will be auto-filled for you.'
+    );
     const showAddNewSiteHandler = async () => {
         setShowAddNew((prev) => !prev);
-        try { 
-            await navigator.clipboard.writeText('azbycxdvew')
-            setExplainer("Please search for \"azbycxdvew\" (copied to your clipboard) in the website of your choice. Afterwards, the correct search URL will be auto-filled for you.");
+        try {
+            await navigator.clipboard.writeText("azbycxdvew");
+            setExplainer(
+                'Please search for "azbycxdvew" (copied to your clipboard) in the website of your choice. Afterwards, the correct search URL will be auto-filled for you.'
+            );
         } catch (e) {
-            console.log(e) // copying failed
+            console.log(e); // copying failed
         }
-    }
+    };
 
-    const addSubmitHandler = (site: SiteStruct, index?: number) => {
+    const addSubmitHandler = (site: SiteStruct) => {
+        
         chrome.tabs &&
             chrome.tabs.query(
                 {
@@ -121,7 +126,7 @@ const EditingBody = () => {
                             tabs[0].id || 0,
                             {
                                 type: "ADD_SITE",
-                                payload: site,
+                                payload: { site },
                             } as DOMMessage,
                             (response: DOMMessageResponse) => {
                                 console.log(response);
@@ -217,7 +222,7 @@ const EditingBody = () => {
             )}
             {sites &&
                 sites.map((site: SiteStruct, index) => (
-                    <SiteRow key={index} index={index} site={site} />
+                    <SiteRow key={index} site={site} />
                 ))}
         </div>
     );

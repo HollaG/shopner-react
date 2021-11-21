@@ -4,6 +4,7 @@ import {
     SEARCH_STRING_SUBSTITUTE,
 } from "../../chromeServices/background";
 import { DOMMessage, DOMMessageResponse, SiteStruct } from "../../types";
+import { uid } from "../functions";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
 
@@ -11,11 +12,11 @@ const AddOrEditSite: React.FC<{
     isEditing: boolean;
     explainer?: string;
     site?: SiteStruct;
-    index?: number;
+
     name: string;
     url: string;
-    submitHandler: (site: SiteStruct, index?: number) => void;
-}> = ({ isEditing, site, index, name, url, submitHandler, explainer }) => {
+    submitHandler: (site: SiteStruct) => void;
+}> = ({ isEditing, site, name, url, submitHandler, explainer }) => {
     const [urlValue, setUrlValue] = useState(url);
     const [nameValue, setNameValue] = useState(name);
     const formSubmitHandler = (event: React.FormEvent<HTMLFormElement>) => {
@@ -37,7 +38,8 @@ const AddOrEditSite: React.FC<{
         setNameValue("");
         setUrlValue("");
 
-        submitHandler({ url, searchUrl, name, enabled: true }, index);
+        // If we pass in a site (aka editing), don't generate a new uid, return the current one
+        submitHandler({ url, searchUrl, name, enabled: true, id: site ? site.id : uid() });
     };
 
     const nameValueChangeHandler = (

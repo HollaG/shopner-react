@@ -10,12 +10,12 @@ import { handleChromeError } from "../functions";
 import ImageWithFallback from "../ui/ImageWithFallback";
 import AddOrEditSite from "./AddOrEditSite";
 
-const SiteRow: React.FC<{ site: SiteStruct; index: number }> = ({
+const SiteRow: React.FC<{ site: SiteStruct }> = ({
     site,
-    index,
+   
 }) => {
     const [editing, setEditing] = useState(false);
-    console.log({site, index})
+    
     const handleToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
         // Send message to background script to toggle 'enabled' property
         site.enabled = e.target.checked;
@@ -35,7 +35,7 @@ const SiteRow: React.FC<{ site: SiteStruct; index: number }> = ({
                             tabs[0].id || 0,
                             {
                                 type: "EDIT_SITE",
-                                payload: { site, index },
+                                payload: { site },
                             } as DOMMessage,
                             (response: DOMMessageResponse) => {
                                 console.log(response);
@@ -75,7 +75,7 @@ const SiteRow: React.FC<{ site: SiteStruct; index: number }> = ({
                             {
                                 type: "REMOVE_SITE",
                                 payload: {
-                                    index,
+                                    site
                                 },
                             } as DOMMessage,
                             (response: DOMMessageResponse) => {
@@ -91,7 +91,7 @@ const SiteRow: React.FC<{ site: SiteStruct; index: number }> = ({
         }
     };
 
-    const editSubmitHandler = (site: SiteStruct, index?: number) => {
+    const editSubmitHandler = (site: SiteStruct) => {
         chrome.tabs &&
             chrome.tabs.query(
                 {
@@ -107,7 +107,7 @@ const SiteRow: React.FC<{ site: SiteStruct; index: number }> = ({
                             tabs[0].id || 0,
                             {
                                 type: "EDIT_SITE",
-                                payload: { site, index },
+                                payload: { site },
                             } as DOMMessage,
                             (response: DOMMessageResponse) => {
                                 console.log(response);
@@ -160,7 +160,7 @@ const SiteRow: React.FC<{ site: SiteStruct; index: number }> = ({
                     submitHandler={editSubmitHandler}
                     isEditing={true}
                     site={site}
-                    index={index}
+                    
                     name={site.name}
                     url={site.searchUrl.replaceAll(
                         SEARCH_STRING_SUBSTITUTE,

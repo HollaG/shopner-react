@@ -1,4 +1,5 @@
 import { handleChromeError } from "../components/functions";
+
 import { DOMMessage, DOMMessageResponse, SiteStruct } from "../types";
 
 // Function called when a new message is received
@@ -19,131 +20,137 @@ const messagesFromReactAppListener = (
         chrome.storage.local.get("sites", function (result) {
             console.log("Value currently is ", result.sites);
 
-            if (msg.type.startsWith("TOGGLE_AUTOOPEN__")) {
-                // Toggle the 'auto open' property of the site (enabled/disabled)
-                // const index = Number(msg.type.split("__")[1]);
-                // // Set the enabled property of the site at the index to be opposite
-                // const sites = [...result.sites];
-                // sites[index].enabled = !sites[index].enabled;
-                // chrome.storage.local.set({ sites }, function () {
-                //     console.log("Value is set to ", { sites });
-                //     const response: DOMMessageResponse = {
-                //         payload: {
-                //             text: selected,
-                //             sites,
-                //         },
-                //     };
-                //     sendResponse(response);
-                // });
-            } else {
-                console.log("MESSAGE TYPE", msg.type);
-                switch (msg.type) {
-                    case "GET_SELECTED": {
-                        sendResponse({ payload: { text: selected, currentUrl: document.URL } });
-                        break;
-                    }
-                    case "GET_SITE_INFO": {
-                        const response: DOMMessageResponse = {
-                            payload: {
-                                title: document.title,
-                                searchUrl: document.URL,
-                            },
-                        };
-                        sendResponse(response);
-                        break;
-                    }
-                    case "ADD_SITE": {
-                        console.log("SWITCH ADD SITE");
-                        const payload: SiteStruct = msg.payload;
-                        const sites = [...result.sites, payload].sort((a, b) =>
-                            a.name.localeCompare(b.name)
-                        );
-                        chrome.storage.local.set({ sites }, function () {
-                            console.log("Value is set to ", { sites });
-                            const response: DOMMessageResponse = {
-                                payload: {
-                                    text: selected,
-                                    sites,
-                                },
-                            };
-                            sendResponse(response);
-                        });
-                        break;
-                    }
-                    case "EDIT_SITE": {
-                        const index: number = msg.payload.index;
-                        const sites = [...result.sites];
-                        const site = msg.payload.site;
-                        sites[index] = site;
-                        chrome.storage.local.set({ sites }, function () {
-                            console.log("Value is set to ", { sites });
-                            const response: DOMMessageResponse = {
-                                payload: {
-                                    text: selected,
-                                    sites,
-                                },
-                            };
-                            sendResponse(response);
-                        });
+            console.log("MESSAGE TYPE", msg.type);
+            switch (msg.type) {
+                case "GET_SELECTED": {
+                    sendResponse({
+                        payload: { text: selected, currentUrl: document.URL },
+                    });
+                    break;
+                }
+                case "GET_SITE_INFO": {
+                    const response: DOMMessageResponse = {
+                        payload: {
+                            title: document.title,
+                            searchUrl: document.URL,
+                        },
+                    };
+                    sendResponse(response);
+                    break;
+                }
+                case "ADD_SITE": {
+                    console.log("SWITCH ADD SITE");
+                    const payload: SiteStruct = msg.payload.site;
 
-                        break;
-                    }
-                    case "REMOVE_SITE": {
-                        console.log("SWITCH REMOVE SITE");
-
-                        const index: number = msg.payload.index;
-                        const sites = [...result.sites];
-                        if (index >= 0 && index < sites.length) {
-                            sites.splice(index, 1);
-                            console.log("Spliced sites,", { sites, index });
-                            chrome.storage.local.set({ sites }, function () {
-                                console.log("Value is set to ", { sites });
-                                const response: DOMMessageResponse = {
-                                    payload: {
-                                        text: selected,
-                                        sites,
-                                    },
-                                };
-                                sendResponse(response);
-                            });
-                        }
-                        break;
-                    }
-                    case "IMPORT": {
-                        const sites = msg.payload;
-                        chrome.storage.local.set({ sites }, function () {
-                            console.log("Value is set to ", { sites });
-                            const response: DOMMessageResponse = {
-                                payload: {
-                                    text: selected,
-                                    sites,
-                                },
-                            };
-                            sendResponse(response);
-                        });
-                        break;
-                    }
-                    case "SAVE_PRESET": {
-                        chrome.storage.local.get("sites", function(result) {
-                            const sites = result.sites;
-                            chrome.storage.local.get("presets", function(presetResult) {
-                                const presets = presetResult.presets
-                                let newPresets = {}
-                                
-                            })
-                        })
-                        break;
-                    }
-                    default: {
+                    const sites = [...result.sites, payload].sort((a, b) =>
+                        a.name.localeCompare(b.name)
+                    );
+                    chrome.storage.local.set({ sites }, function () {
+                        console.log("Value is set to ", { sites });
                         const response: DOMMessageResponse = {
                             payload: {
                                 text: selected,
-                                sites: result.sites,
-                                currentUrl: document.URL,
+                                sites,
                             },
                         };
                         sendResponse(response);
-                    }
+                    });
+                    break;
+                }
+
+                case "EDIT_SITE": {
+                    /* Required payload: 
+                        {
+                            payload: {
+                                site: SiteStruct[],
+                            }  
+                        }
+                        References: 
+                        - Body.tsx (enabling/disabling)
+                        - SiteRow.tsx (enabling/disabling, editing fields)
+                    */
+                    const sites: SiteStruct[] = [...result.sites];
+                    const site: SiteStruct = msg.payload.site;
+                    // const index: number = msg.payload.index;
+                    const index = sites.findIndex(
+                        (oldSite) => oldSite.id === site.id
+                    );
+                    sites[index] = site;
+                    chrome.storage.local.set({ sites }, function () {
+                        console.log("Value is set to ", { sites });
+                        const response: DOMMessageResponse = {
+                            payload: {
+                                text: selected,
+                                sites,
+                            },
+                        };
+                        sendResponse(response);
+                    });
+
+                    break;
+                }
+
+                case "REMOVE_SITE": {
+                    console.log("SWITCH REMOVE SITE");
+
+                    const site: SiteStruct = msg.payload.site;
+                    const sites: SiteStruct[] = [...result.sites];
+                    const filtered = sites.filter(
+                        (oldSite) => oldSite.id !== site.id
+                    );
+
+                    // if (index >= 0 && index < sites.length) {
+                    //     sites.splice(index, 1);
+                    //     console.log("Spliced sites,", { sites, index });
+                    chrome.storage.local.set({ sites: filtered }, function () {
+                        console.log("Value is set to ", { sites });
+                        const response: DOMMessageResponse = {
+                            payload: {
+                                text: selected,
+                                sites,
+                            },
+                        };
+                        sendResponse(response);
+                    });
+                    // }
+                    break;
+                }
+                case "IMPORT": {
+                    const sites = msg.payload;
+                    chrome.storage.local.set({ sites }, function () {
+                        console.log("Value is set to ", { sites });
+                        const response: DOMMessageResponse = {
+                            payload: {
+                                text: selected,
+                                sites,
+                            },
+                        };
+                        sendResponse(response);
+                    });
+                    break;
+                }
+                case "SAVE_PRESET": {
+                    chrome.storage.local.get("sites", function (result) {
+                        const sites = result.sites;
+                        chrome.storage.local.get(
+                            "presets",
+                            function (presetResult) {
+                                const presets = presetResult.presets;
+                                let newPresets = {};
+                            }
+                        );
+                    });
+                    break;
+                }
+                default: {
+                    const response: DOMMessageResponse = {
+                        payload: {
+                            text: selected,
+                            sites: result.sites,
+                            currentUrl: document.URL,
+                        },
+                    };
+                    sendResponse(response);
                 }
             }
         });
@@ -156,7 +163,6 @@ const messagesFromReactAppListener = (
  */
 chrome.runtime &&
     chrome.runtime.onMessage.addListener(messagesFromReactAppListener);
-
 
 // chrome.contextMenus.onClicked.addListener(function (info, tab) {
 //     chrome.storage.local.get("sites", function (result) {

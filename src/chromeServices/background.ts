@@ -84,6 +84,8 @@ const sites: SiteStruct[] = JSON.parse(
 //         enabled: true,
 //     },
 // ];
+
+// Sort the default sites and add unique ID to them
 sites.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
 sites.map((site) => {
     site.id = uid();
@@ -91,6 +93,7 @@ sites.map((site) => {
 });
 export {};
 
+// Create the entire context menu from a given sites array
 const createContextMenu = (sites: SiteStruct[]) => {
     // Expect an unsorted array of
     // Sort by name
@@ -114,7 +117,7 @@ const createContextMenu = (sites: SiteStruct[]) => {
         chrome.contextMenus.create({
             title: site.name,
             contexts: ["all"],
-            id: `context__open_${index}`,
+            id: `context__open_${site.id ? site.id : index}`, // TODO
             // parentId: "context__open_specific",
             type: "checkbox",
             checked: site.enabled,
@@ -144,23 +147,6 @@ chrome.runtime &&
         if (chrome.runtime.lastError) {
             handleChromeError(chrome.runtime.lastError);
         } else {
-            chrome.contextMenus.create({
-                title: "Search all sites",
-                contexts: ["all"],
-                id: MENUITEM__OPEN_ALL,
-            });
-
-            chrome.contextMenus.create({
-                type: "separator",
-                contexts: ["all"],
-                id: "context_separator",
-            });
-
-            // chrome.contextMenus.create({
-            //     title: "Search specific site",
-            //     contexts: ["all"],
-            //     id: "context__open_specific",
-            // });
             // Check if the local storage already contains stuff (i.e. we already loaded it before)
             // If it already has stuff, don't add anything
             chrome.storage.local.get("sites", function (result) {
@@ -175,36 +161,13 @@ chrome.runtime &&
                 });
                 // }
 
-                userSites.forEach((site, index) => {
-                    chrome.contextMenus.create({
-                        title: site.name,
-                        contexts: ["all"],
-                        id: `context__open_${index}`,
-                        // parentId: "context__open_specific",
-                        type: "checkbox",
-                        checked: site.enabled,
-                    });
-                });
+                createContextMenu(userSites);
             });
-
-            // chrome.contextMenus.create({
-            //     title: "Open Shopee",
-            //     contexts:["selection"],
-            //     id: "context__open_specific__shopee",
-            //     parentId: "context__open_specific"
-            // });
-
-            // chrome.contextMenus.onClicked.addListener((info, tab) => {
-            //     if (info.menuItemId === "context__open_all") {
-            //         chrome.tabs.query({active: true, currentWindow: true}, function (tabs) {
-            //             chrome.tabs.sendMessage(tabs[0].id || 0, {action: "open_all"});
-            //         });
-            //     }
-            // })
         }
         return true;
     });
 
+// Listen to click events and respond to them accordingly
 chrome.contextMenus &&
     chrome.contextMenus.onClicked.addListener(function (info, tab) {
         if (chrome.runtime.lastError) {
@@ -213,6 +176,7 @@ chrome.contextMenus &&
             const tabId = tab.id || 0;
             console.log({ tabId, type: info.menuItemId });
 
+            // Get the selected text
             chrome.tabs.sendMessage(
                 tabId,
                 { type: info.menuItemId } as DOMMessage,
@@ -223,9 +187,7 @@ chrome.contextMenus &&
                         ? encodeURIComponent(selected.trim().toLowerCase())
                         : "";
                     const currentUrl = response.payload.currentUrl || "";
-                    const { origin } = new URL(
-                        currentUrl?.toLowerCase().trim() || ""
-                    );
+
                     if (info.menuItemId === MENUITEM__OPEN_ALL) {
                         // Open all tabs
                         userSites &&
@@ -253,30 +215,35 @@ chrome.contextMenus &&
                     } else if (
                         info.menuItemId.toString().startsWith("context__open_")
                     ) {
+                        // Open individual site
+
                         // When the user clicks on an item with a checkbox, the state will be toggled. So, we need to reset the state
                         chrome.contextMenus.update(info.menuItemId.toString(), {
                             checked: !info.checked,
                         });
 
-                        // Open specific tab
-                        const index = Number(
-                            info.menuItemId
-                                .toString()
-                                .split("context__open_")[1]
-                        );
-                        if (!Number.isNaN(index) && userSites) {
-                            const site = userSites[index];
-                            chrome.tabs.create({
-                                url: selected
-                                    ? site.searchUrl.replaceAll(
-                                          SEARCH_STRING_SUBSTITUTE,
-                                          encodeURIComponent(
-                                              selected.trim().toLowerCase()
+                        // Open specific tab (menuItemId = "cntext__open_UID")
+                        const siteId = info.menuItemId
+                            .toString()
+                            .split("context__open_")[1];
+                        if (!Number.isNaN(siteId) && userSites) {
+                            // const site = userSites[siteId];
+                            const site = userSites.find(
+                                (site) => site.id === siteId
+                            );
+                            if (site) {
+                                chrome.tabs.create({
+                                    url: selected
+                                        ? site.searchUrl.replaceAll(
+                                              SEARCH_STRING_SUBSTITUTE,
+                                              encodeURIComponent(
+                                                  selected.trim().toLowerCase()
+                                              )
                                           )
-                                      )
-                                    : site.url,
-                                active: false,
-                            });
+                                        : site.url,
+                                    active: false,
+                                });
+                            }
                         }
                     }
                 }
@@ -307,41 +274,41 @@ chrome.contextMenus &&
 //         });
 //     });
 
-const setIcon = (tab: chrome.tabs.Tab) => {
-    const tabId = tab.id || 0;
-    console.log(tab.url);
-    if (!tab.url || tab.url === "" || tab.url.startsWith("chrome://")) {
-        // No url, possibly chrome://?
-        chrome.action.setIcon({
-            path: "/icons/logo_disabled16.png",
-            tabId,
-        });
-    } else {
-        // Valid url
-        chrome.action.setIcon(
-            {
-                path: "/icons/logo16.png",
+// const setIcon = (tab: chrome.tabs.Tab) => {
+//     const tabId = tab.id || 0;
+//     console.log(tab.url);
+//     if (!tab.url || tab.url === "" || tab.url.startsWith("chrome://")) {
+//         // No url, possibly chrome://?
+//         chrome.action.setIcon({
+//             path: "/icons/logo_disabled16.png",
+//             tabId,
+//         });
+//     } else {
+//         // Valid url
+//         chrome.action.setIcon(
+//             {
+//                 path: "/icons/logo16.png",
 
-                tabId,
-            },
-            function () {}
-        );
-    }
-};
+//                 tabId,
+//             },
+//             function () {}
+//         );
+//     }
+// };
 
-chrome.tabs &&
-    chrome.tabs.onActivated.addListener(function (info) {
-        chrome.tabs.get(info.tabId, function (tab) {
-            setIcon(tab);
-        });
-    });
+// chrome.tabs &&
+//     chrome.tabs.onActivated.addListener(function (info) {
+//         chrome.tabs.get(info.tabId, function (tab) {
+//             setIcon(tab);
+//         });
+//     });
 
-chrome.tabs &&
-    chrome.tabs.onUpdated.addListener(function (tabId, change, updatedTab) {
-        chrome.tabs.query({ active: true }, function (activeTabs) {
-            const activeTab = activeTabs[0];
-            if (activeTab === updatedTab) {
-                setIcon(updatedTab);
-            }
-        });
-    });
+// chrome.tabs &&
+//     chrome.tabs.onUpdated.addListener(function (tabId, change, updatedTab) {
+//         chrome.tabs.query({ active: true }, function (activeTabs) {
+//             const activeTab = activeTabs[0];
+//             if (activeTab === updatedTab) {
+//                 setIcon(updatedTab);
+//             }
+//         });
+//     });

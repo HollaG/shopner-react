@@ -2,23 +2,23 @@ import { SiteStruct } from "../types";
 import ImageWithFallback from "./ui/ImageWithFallback";
 
 const Site: React.FC<{
-    index: number;
+    
     site: SiteStruct;
-    visitStoreHandler: (index: number) => void;
-    toggleStoreHandler: (index: number) => void;
-}> = ({ index, site, visitStoreHandler, toggleStoreHandler }) => {
+    visitStoreHandler: (site: SiteStruct) => void;
+    toggleStoreHandler: (site: SiteStruct) => void;
+}> = ({ site, visitStoreHandler, toggleStoreHandler }) => {
     const disableHandler = (
         event: React.MouseEvent<HTMLDivElement, MouseEvent>
     ) => {
         event.preventDefault();
         // Disable the item
-        toggleStoreHandler(index);
+        toggleStoreHandler(site);
     };
 
     return (
         <div
             className={`rounded hover:bg-gray-200 flex flex-col justify-center items-center p-2 m-1 w-20 cursor-pointer`}
-            onClick={() => visitStoreHandler(index)}
+            onClick={() => visitStoreHandler(site)}
             onContextMenu={disableHandler}
         >
             

@@ -2,56 +2,65 @@ import { useEffect, useState } from "react";
 import { useChromeStorageLocal } from "use-chrome-storage";
 import { SEARCH_STRING_SUBSTITUTE } from "../chromeServices/background";
 import { DOMMessage, DOMMessageResponse, SiteStruct } from "../types";
-import { handleChromeError } from "./functions";
+import { handleChromeError, sendMessage } from "./functions";
 import Site from "./Site";
 import Button from "./ui/Button";
 import Input from "./ui/Input";
 // import { sites } from "./Editing/EditingBody";
 const Body = () => {
-    const [searchTerm, setSearchTerm] = useState("");
     // const [sites, setSites] = useState<Site[]>([]);
 
     const [sites, setSites, _, __]: [SiteStruct[], any, any, any] =
         useChromeStorageLocal("sites", []);
-    const [currentUrl, setCurrentUrl] = useState("");
-    console.log({ sites, setSites });
-    useEffect(() => {
-        chrome.tabs &&
-            chrome.tabs.query(
-                {
-                    active: true,
-                    currentWindow: true,
-                },
-                (tabs) => {
-                    if (chrome.runtime.lastError) {
-                        handleChromeError(chrome.runtime.lastError);
-                    } else {
-                        // Callback function
-                        chrome.tabs.sendMessage(
-                            tabs[0].id || 0,
-                            { type: "GET_SELECTED" } as DOMMessage,
-                            (response: DOMMessageResponse) => {
-                                console.log(response);
 
-                                if (chrome.runtime.lastError) {
-                                    handleChromeError(chrome.runtime.lastError);
-                                } else {
-                                    setSearchTerm(response.payload.text || "");
-                                    setCurrentUrl(
-                                        response.payload.currentUrl || ""
-                                    );
-                                    // console.log(response.payload.sites);
-                                    // setSites(response.payload.sites || []);
-                                }
-                            }
-                        );
-                    }
-                }
-            );
+    const [searchTerm, setSearchTerm] = useState("");
+    const [currentUrl, setCurrentUrl] = useState("");
+
+    // Pass message to content script to get the highlighted text and the current URL
+    useEffect(() => {
+        sendMessage({ type: "GET_SELECTED" })
+            .then((response) => {
+                setSearchTerm(response.payload.text || "");
+                setCurrentUrl(response.payload.currentUrl || "");
+            })
+            .catch((e) => {
+                console.log(e.error);
+            });
+
+        // chrome.tabs &&
+        //     chrome.tabs.query(
+        //         {
+        //             active: true,
+        //             currentWindow: true,
+        //         },
+        //         (tabs) => {
+        //             if (chrome.runtime.lastError) {
+        //                 handleChromeError(chrome.runtime.lastError);
+        //             } else {
+        //                 // Callback function
+        //                 chrome.tabs.sendMessage(
+        //                     tabs[0].id || 0,
+        //                     { type: "GET_SELECTED" } as DOMMessage,
+        //                     (response: DOMMessageResponse) => {
+        //                         console.log(response);
+
+        //                         if (chrome.runtime.lastError) {
+        //                             handleChromeError(chrome.runtime.lastError);
+        //                         } else {
+        //                             setSearchTerm(response.payload.text || "");
+        //                             setCurrentUrl(
+        //                                 response.payload.currentUrl || ""
+        //                             );
+        //                         }
+        //                     }
+        //                 );
+        //             }
+        //         }
+        //     );
     }, []);
 
-    const visitStoreHandler = (index: number) => {
-        const site = sites[index];
+    const visitStoreHandler = (site: SiteStruct) => {
+        // const site = sites[index];
         // window.open(
         //     site.searchUrl.replaceAll(SEARCH_STRING_SUBSTITUTE, encodeURIComponent(selected))},
         //     "_blank"
@@ -79,17 +88,17 @@ const Body = () => {
         sites.forEach(
             // Only open if the site is enabled
             // TODO: and it doesn't include the term that the user is searching for? !currentUrl.includes(encodeURIComponent(searchTerm.trim().toLowerCase())) &&
-            (site, index) => site.enabled && visitStoreHandler(index)
+            (site) => site.enabled && visitStoreHandler(site)
         );
     };
 
-    const toggleStoreHandler = (index: number) => {
+    const toggleStoreHandler = (site: SiteStruct) => {
         // setSites((prevState) => {
         //     const newState = [...prevState];
         //     newState[index].enabled = !newState[index].enabled;
         //     return newState;
         // });
-        const site = sites[index];
+
         site.enabled = !site.enabled;
         chrome.tabs &&
             chrome.tabs.query(
@@ -106,7 +115,7 @@ const Body = () => {
                             tabId,
                             {
                                 type: `EDIT_SITE`,
-                                payload: { site, index },
+                                payload: { site },
                             } as DOMMessage,
                             (response: DOMMessageResponse) => {
                                 if (chrome.runtime.lastError) {
@@ -119,9 +128,7 @@ const Body = () => {
             );
     };
 
-    const saveEnabledHandler = () => {
-        
-    }
+    const savePresetHandler = () => {};
     return (
         <div className="body my-2">
             <div className="search-container flex">
@@ -135,9 +142,7 @@ const Body = () => {
                             setSearchTerm(e.target.value)
                         }
                     />
-                    <Button onClick={visitAllHandler}>
-                        Auto-open
-                    </Button>
+                    <Button onClick={visitAllHandler}>Auto-open</Button>
                 </form>
             </div>
             <div className="preset-container flex justify-between my-1">
@@ -148,7 +153,6 @@ const Body = () => {
                 {sites &&
                     sites.map((site, index) => (
                         <Site
-                            index={index}
                             site={site}
                             key={index}
                             visitStoreHandler={visitStoreHandler}
