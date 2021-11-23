@@ -13,6 +13,7 @@ const GroupControls: React.FC<{
         event: React.MouseEvent<HTMLButtonElement>,
         name: string
     ) => {
+        event.preventDefault()
         // Send request to content script to save the currently enabled sites
         sendMessage({
             type: "SAVE_GROUP",
@@ -27,21 +28,23 @@ const GroupControls: React.FC<{
     };
     return (
         <div className="name-container flex mt-1">
-            <Input
-                id="name-input"
-                type="text"
-                placeholder="Group name"
-                value={groupName}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setGroupName(e.target.value)
-                }
-            />
-            <Button
-                classes="ml-1"
-                onClick={(e) => saveGroupHandler(e, groupName)}
-            >
-                Create Group
-            </Button>
+            <form className="w-full flex">
+                <Input
+                    id="name-input"
+                    type="text"
+                    placeholder="Group name"
+                    value={groupName}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setGroupName(e.target.value)
+                    }
+                />
+                <Button
+                    classes="ml-1"
+                    onClick={(e) => saveGroupHandler(e, groupName)}
+                >
+                    Create Group
+                </Button>
+            </form>
         </div>
     );
 };
