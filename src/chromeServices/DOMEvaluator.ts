@@ -3,7 +3,7 @@ import { handleChromeError, uid } from "../components/functions";
 import {
     DOMMessage,
     DOMMessageResponse,
-    PresetStruct,
+    GroupStruct,
     SiteStruct,
 } from "../types";
 
@@ -134,10 +134,10 @@ const messagesFromReactAppListener = (
                     });
                     break;
                 }
-                // case "GET_PRESETS": {
-                //     chrome.storage.local.get("presets", function (result) {
-                //         // Testing presets
-                //         const testing: PresetStruct[] = [
+                // case "GET_GROUPS": {
+                //     chrome.storage.local.get("groups", function (result) {
+                //         // Testing groups
+                //         const testing: GroupStruct[] = [
                 //             {
                 //                 name: "Test",
                 //                 enabled: ["all"],
@@ -152,34 +152,34 @@ const messagesFromReactAppListener = (
                 //         ];
                 //         const response: DOMMessageResponse = {
                 //             payload: {
-                //                 presets: result.presets || testing,
+                //                 groups: result.groups || testing,
                 //             },
                 //         };
                 //         sendResponse(response);
                 //     });
                 //     break;
                 // }
-                case "SAVE_PRESET": {
-                    // Save the current arrangement of enabled / disabled sites as a preset
+                case "SAVE_GROUP": {
+                    // Save the current arrangement of enabled / disabled sites as a group
 
                     const sites: SiteStruct[] = result.sites;
                     const enabled = sites
                         .filter((site) => site.enabled)
                         .map((site) => site.id);
                     chrome.storage.local.get(
-                        "presets",
-                        function (presetResults) {
-                            const presets: PresetStruct[] =
-                                presetResults.presets || [];
+                        "groups",
+                        function (groupResults) {
+                            const groups: GroupStruct[] =
+                                groupResults.groups || [];
                             chrome.storage.local.set(
                                 {
-                                    presets: [
-                                        ...presets,
+                                    groups: [
+                                        ...groups,
                                         {
                                             enabled,
                                             id: uid(),
                                             name: (
-                                                presets.length + 1
+                                                groups.length + 1
                                             ).toString(),
                                         },
                                     ],
@@ -200,16 +200,16 @@ const messagesFromReactAppListener = (
                     break;
                 }
 
-                case "EDIT_PRESET": {
-                    const updatedPreset = msg.payload.preset;
+                case "EDIT_GROUP": {
+                    const updatedGroup = msg.payload.group;
                     chrome.storage.local.get(
-                        "presets",
-                        function (presetResult) {
-                            // Update the preset array
-                            const presets:PresetStruct[] = presetResult.presets || [];
-                            const index = presets.findIndex(preset => preset.id === updatedPreset.id);
-                            if (index > -1) presets[index] = updatedPreset;
-                            chrome.storage.local.set({ presets }, function () {
+                        "groups",
+                        function (groupResult) {
+                            // Update the group array
+                            const groups:GroupStruct[] = groupResult.groups || [];
+                            const index = groups.findIndex(group => group.id === updatedGroup.id);
+                            if (index > -1) groups[index] = updatedGroup;
+                            chrome.storage.local.set({ groups }, function () {
                                 const response: DOMMessageResponse = {
                                     payload: {
                                         text: selected,

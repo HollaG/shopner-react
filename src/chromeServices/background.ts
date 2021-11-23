@@ -9,7 +9,7 @@ import { handleChromeError, uid } from "../components/functions";
 import {
     DOMMessage,
     DOMMessageResponse,
-    PresetStruct,
+    GroupStruct,
     SiteStruct,
 } from "../types";
 
@@ -98,36 +98,36 @@ sites.map((site) => {
 });
 export {};
 
-const createPresetContextMenu = (
+const createGroupContextMenu = (
     sites: SiteStruct[],
-    presets: PresetStruct[]
+    groups: GroupStruct[]
 ) => {
-    presets.forEach((preset) => {
+    groups.forEach((group) => {
         chrome.contextMenus.create({
-            title: `Preset ${preset.name}`,
+            title: `Group ${group.name}`,
             contexts: ["all"],
-            id: `preset__parent_${preset.id}`,
+            id: `group__parent_${group.id}`,
         });
         chrome.contextMenus.create({
-            title: "Open preset sites",
+            title: "Open group sites",
             contexts: ["all"],
-            id: `preset__open_all_${preset.id}`,
-            parentId: `preset__parent_${preset.id}`,
+            id: `group__open_all_${group.id}`,
+            parentId: `group__parent_${group.id}`,
         });
         chrome.contextMenus.create({
             type: "separator",
             contexts: ["all"],
-            id: `preset_${preset.id}_separator`,
-            parentId: `preset__parent_${preset.id}`,
+            id: `group_${group.id}_separator`,
+            parentId: `group__parent_${group.id}`,
         });
-        preset.enabled.forEach((siteId) => {
+        group.enabled.forEach((siteId) => {
             const site = sites.find((site) => site.id === siteId);
             if (site)
                 chrome.contextMenus.create({
                     title: site.name,
                     contexts: ["all"],
-                    id: `context__open_${site.id}_${preset.id}`,
-                    parentId: `preset__parent_${preset.id}`,
+                    id: `context__open_${site.id}_${group.id}`,
+                    parentId: `group__parent_${group.id}`,
                     // type: "checkbox",
                     // checked: true,
                 });
@@ -137,23 +137,23 @@ const createPresetContextMenu = (
 
 // Create the entire context menu
 const createContextMenu = () => {
-    chrome.storage.local.get(["sites", "presets"], function (siteResults) {
+    chrome.storage.local.get(["sites", "groups"], function (siteResults) {
         const sites: SiteStruct[] = siteResults.sites;
-        const presets: PresetStruct[] = siteResults.presets;
+        const groups: GroupStruct[] = siteResults.groups;
 
         // Sort sites by name
         const sortedSites = sites.sort((a, b) =>
             a.name.toLowerCase().localeCompare(b.name.toLowerCase())
         );
 
-        // Sort presets by name
-        const sortedPresets = presets.sort((a, b) =>
+        // Sort groups by name
+        const sortedGroups = groups.sort((a, b) =>
             a.name.toLowerCase().localeCompare(b.name.toLowerCase())
         );
 
         /* Context menu structure
-            - PRESET {preset.name} > 
-                > Open preset sites
+            - GROUP {group.name} > 
+                > Open group sites
                 > << SEPARATOR >>
                 > ✓ Site 1
                 > ✓ Site 2
@@ -167,15 +167,15 @@ const createContextMenu = () => {
         
         */
         chrome.contextMenus.removeAll();
-        // Create the preset context menu
-        createPresetContextMenu(sortedSites, sortedPresets);
+        // Create the group context menu
+        createGroupContextMenu(sortedSites, sortedGroups);
 
-        // If there are presets, add a separator
-        if (presets.length > 0) {
+        // If there are groups, add a separator
+        if (groups.length > 0) {
             chrome.contextMenus.create({
                 type: "separator",
                 contexts: ["all"],
-                id: "preset_separator",
+                id: "group_separator",
             });
         }
 
@@ -223,7 +223,7 @@ const createContextMenu = () => {
     //     id: MENUITEM__OPEN_ALL,
     // });
 
-    // createPresetContextMenu(presets);
+    // createGroupContextMenu(groups);
 
     // chrome.contextMenus.create({
     //     type: "separator",
@@ -256,8 +256,8 @@ chrome.storage &&
                 // Delete all the old menu items and add again
                 // Cannot just modify because when the user adds / remove sites, the indexes might change
                 // Todo: possible work on assigning a unique ID to each site which would fix this issue
-            } else if (changes.presets) {
-                if (changes.presets) {
+            } else if (changes.groups) {
+                if (changes.groups) {
                 }
             }
         }
@@ -288,14 +288,14 @@ chrome.runtime &&
                 // createContextMenu(userSites);
                 // createContextMenu()
             });
-            chrome.storage.local.get("presets", function (result) {
-                // if (result.presets) {
-                //     console.log("Found presets already set:", {
-                //         presets: result.presets,
+            chrome.storage.local.get("groups", function (result) {
+                // if (result.groups) {
+                //     console.log("Found groups already set:", {
+                //         groups: result.groups,
                 //     });
                 // } else {
-                chrome.storage.local.set({ presets: [] }, function () {
-                    console.log("Value is set to", { presets: [] });
+                chrome.storage.local.set({ groups: [] }, function () {
+                    console.log("Value is set to", { groups: [] });
                 });
                 // }
             });
@@ -324,13 +324,13 @@ chrome.contextMenus &&
                         ? encodeURIComponent(selected.trim().toLowerCase())
                         : "";
                     const currentUrl = response.payload.currentUrl || "";
-                    // Get the current sites and presets
+                    // Get the current sites and groups
                     chrome.storage.local.get(
-                        ["sites", "presets"],
+                        ["sites", "groups"],
                         function (result) {
                             const sites: SiteStruct[] = result.sites || [];
-                            const presets: PresetStruct[] =
-                                result.presets || [];
+                            const groups: GroupStruct[] =
+                                result.groups || [];
 
                             if (info.menuItemId === MENUITEM__OPEN_ALL) {
                                 // option: open all enabled sites
@@ -371,7 +371,7 @@ chrome.contextMenus &&
                                     }
                                 );
 
-                                // Open specific tab (menuItemId = "cntext__open_UID") OR (menuItemId = "context__open_UID_PRESET_UID")
+                                // Open specific tab (menuItemId = "cntext__open_UID") OR (menuItemId = "context__open_UID_GROUP_UID")
                                 const siteId = info.menuItemId
                                     .toString()
                                     .replace("context__open_", "")
@@ -400,25 +400,25 @@ chrome.contextMenus &&
                             } else if (
                                 info.menuItemId
                                     .toString()
-                                    .startsWith("preset__open_all_")
+                                    .startsWith("group__open_all_")
                             ) {
-                                // menuItemID: preset__open_all_PRESET_UID
-                                const presetId = info.menuItemId
+                                // menuItemID: group__open_all_GROUP_UID
+                                const groupId = info.menuItemId
                                     .toString()
-                                    .replace("preset__open_all_", "")
+                                    .replace("group__open_all_", "")
                                     .split("_")[0];
 
-                                if (!Number.isNaN(presetId) && presets) {
-                                    // Find the enabled sites in the preset
-                                    const preset = presets.find(
-                                        (preset) => preset.id === presetId
+                                if (!Number.isNaN(groupId) && groups) {
+                                    // Find the enabled sites in the group
+                                    const group = groups.find(
+                                        (group) => group.id === groupId
                                     );
-                                    if (preset) {
+                                    if (group) {
                                         sites.forEach((site) => {
                                             if (
-                                                preset.enabled.includes(site.id)
+                                                group.enabled.includes(site.id)
                                             ) {
-                                                // If the site is enabled in the preset, construct the URL and open it
+                                                // If the site is enabled in the group, construct the URL and open it
                                                 const url = selected
                                                     ? site.searchUrl.replaceAll(
                                                           SEARCH_STRING_SUBSTITUTE,
@@ -487,7 +487,7 @@ chrome.contextMenus &&
             //                 checked: !info.checked,
             //             });
 
-            //             // Open specific tab (menuItemId = "cntext__open_UID") OR (menuItemId = "context__open_UID_PRESET_UID")
+            //             // Open specific tab (menuItemId = "cntext__open_UID") OR (menuItemId = "context__open_UID_GROUP_UID")
             //             const siteId = info.menuItemId
             //                 .toString()
             //                 .replace("context__open_", "")
@@ -514,12 +514,12 @@ chrome.contextMenus &&
             //         } else if (
             //             info.menuItemId
             //                 .toString()
-            //                 .startsWith("preset__open_all_")
+            //                 .startsWith("group__open_all_")
             //         ) {
-            //             // menuItemID: preset__open_all_PRESET_UID
-            //             const presetId = info.menuItemId
+            //             // menuItemID: group__open_all_GROUP_UID
+            //             const groupId = info.menuItemId
             //                 .toString()
-            //                 .replace("preset__open_all_", "")
+            //                 .replace("group__open_all_", "")
             //                 .split("_")[0];
             //         }
             //     }

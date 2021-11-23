@@ -5,7 +5,7 @@ import { SEARCH_STRING_SUBSTITUTE } from "../chromeServices/background";
 import {
     DOMMessage,
     DOMMessageResponse,
-    PresetStruct,
+    GroupStruct,
     SiteStruct,
 } from "../types";
 import { handleChromeError, sendMessage } from "./functions";
@@ -15,7 +15,7 @@ import Chip from "./ui/Chip";
 import Input from "./ui/Input";
 // import { sites } from "./Editing/EditingBody";
 
-const defaultPreset: PresetStruct = {
+const defaultGroup: GroupStruct = {
     id: "default",
     name: "Default",
     enabled: [],
@@ -25,12 +25,13 @@ const Body = () => {
 
     const [sites, setSites, _, __]: [SiteStruct[], any, any, any] =
         useChromeStorageLocal("sites", []);
-    const [presets, setPresets, ___, ____]: [PresetStruct[], any, any, any] =
-        useChromeStorageLocal("presets", []);
+    const [groups, setGroups, ___, ____]: [GroupStruct[], any, any, any] =
+        useChromeStorageLocal("groups", []);
 
     const [searchTerm, setSearchTerm] = useState("");
     const [currentUrl, setCurrentUrl] = useState("");
-
+    const [selectedGroup, setSelectedGroup] = useState(defaultGroup);
+    const [groupSites, setGroupSites] = useState<SiteStruct[]>([]);
     useEffect(() => {
         // Pass message to content script to get the highlighted text and the current URL
         sendMessage({ type: "GET_SELECTED" })
@@ -66,12 +67,12 @@ const Body = () => {
 
     const visitAllHandler = (event: React.MouseEvent<HTMLButtonElement>) => {
         event.preventDefault();
-
-        sites.forEach(
-            // Only open if the site is enabled
-            // TODO: and it doesn't include the term that the user is searching for? !currentUrl.includes(encodeURIComponent(searchTerm.trim().toLowerCase())) &&
+        let sitesToVisit: SiteStruct[] = selectedGroup.id === "default" ? sites : groupSites;
+        sitesToVisit.forEach(
+            // Only open if the site is enabled           
             (site) => site.enabled && visitStoreHandler(site)
         );
+        
     };
 
     const toggleStoreHandler = (site: SiteStruct) => {
@@ -89,73 +90,71 @@ const Body = () => {
         // No need to update the main `sites` variable because it automatically updates whenever the local storage changes
     };
 
-    const [selectedPreset, setSelectedPreset] = useState(defaultPreset);
-    const [presetSites, setPresetSites] = useState<SiteStruct[]>([]);
-    const savePresetHandler = () => {
+    const saveGroupHandler = () => {
         // Send request to content script to save the currently enabled sites
         sendMessage({
-            type: "SAVE_PRESET",
+            type: "SAVE_GROUP",
         }).catch(console.log);
     };
-    const selectPresetHandler = (preset: PresetStruct) => {
-        // console.log({ preset });
-        setSelectedPreset(preset);
-        // if (preset.id === "default") {
-        //     setPresetSites([]);
+    const selectGroupHandler = (group: GroupStruct) => {
+        // console.log({ group });
+        setSelectedGroup(group);
+        // if (group.id === "default") {
+        //     setGroupSites([]);
         // } else {
-        //     // SET sites for this preset
+        //     // SET sites for this group
         //     const enabledSites: SiteStruct[] = [];
         //     const disabledSites: SiteStruct[] = [];
         //     sites.forEach((site) => {
-        //         site.enabled = preset.enabled.includes(site.id);
+        //         site.enabled = group.enabled.includes(site.id);
         //         if (site.enabled) enabledSites.push(site);
         //         else disabledSites.push(site);
         //     });
         //     console.log({ enabledSites, disabledSites });
-        //     setPresetSites([...enabledSites, ...disabledSites]);
+        //     setGroupSites([...enabledSites, ...disabledSites]);
         // }
     };
 
-    // Update whenever the 'presets' (from chrome storage) changes
-    // or when the user selects a new preset
+    // Update whenever the 'groups' (from chrome storage) changes
+    // or when the user selects a new group
     useEffect(() => {
-        if (selectedPreset.id === "default") {
-            setPresetSites([]);
+        if (selectedGroup.id === "default") {
+            setGroupSites([]);
         } else {
-            // SET sites for this preset
+            // SET sites for this group
             const enabledSites: SiteStruct[] = [];
             const disabledSites: SiteStruct[] = [];
             // Clone the sites object so we don't affect the original
             const cloned = copy(sites);
             cloned.forEach((site) => {
-                site.enabled = selectedPreset.enabled.includes(site.id);
+                site.enabled = selectedGroup.enabled.includes(site.id);
                 if (site.enabled) enabledSites.push(site);
                 else disabledSites.push(site);
             });
             console.log({ enabledSites, disabledSites });
-            setPresetSites([...enabledSites, ...disabledSites]);
+            setGroupSites([...enabledSites, ...disabledSites]);
         }
-    }, [presets, selectedPreset, sites])
+    }, [groups, selectedGroup, sites]);
 
-    // When a site in a preset is enabled, do not update the main storage. Instead, update the preset's enabled property
-    const toggleSiteInPresetHandler = (site: SiteStruct) => {
-        if (selectedPreset.id !== "default") {
-            const currentPresetEnabled = selectedPreset.enabled;
-            const index = currentPresetEnabled.indexOf(site.id);
+    // When a site in a group is enabled, do not update the main storage. Instead, update the group's enabled property
+    const toggleSiteInGroupHandler = (site: SiteStruct) => {
+        if (selectedGroup.id !== "default") {
+            const currentGroupEnabled = selectedGroup.enabled;
+            const index = currentGroupEnabled.indexOf(site.id);
             if (index > -1) {
                 // already exists, remove it
-                currentPresetEnabled.splice(index, 1);
+                currentGroupEnabled.splice(index, 1);
             } else {
-                currentPresetEnabled.push(site.id);
+                currentGroupEnabled.push(site.id);
             }
             sendMessage({
-                type: `EDIT_PRESET`,
+                type: `EDIT_GROUP`,
                 payload: {
-                    preset: {
-                        ...selectedPreset,
-                        enabled: currentPresetEnabled,
-                    }
-                }
+                    group: {
+                        ...selectedGroup,
+                        enabled: currentGroupEnabled,
+                    },
+                },
             }).catch(console.log);
         }
     };
@@ -175,28 +174,35 @@ const Body = () => {
                     <Button onClick={visitAllHandler}>Auto-open</Button>
                 </form>
             </div>
-            <div className="preset-container flex justify-between my-1">
+            
+            <div className="group-container flex justify-between my-1">
                 <div className="flex items-center">
                     <Chip
-                        onClick={() => selectPresetHandler(defaultPreset)}
-                        preset={defaultPreset}
-                        selected={selectedPreset.id === "default"}
+                        onClick={() => selectGroupHandler(defaultGroup)}
+                        group={defaultGroup}
+                        selected={selectedGroup.id === "default"}
                     />
-                    {presets &&
-                        presets.map((preset) => (
+                    {groups &&
+                        groups.map((group) => (
                             <Chip
-                                onClick={() => selectPresetHandler(preset)}
-                                preset={preset}
-                                selected={selectedPreset.id === preset.id}
+                                onClick={() => selectGroupHandler(group)}
+                                group={group}
+                                selected={selectedGroup.id === group.id}
                             />
                         ))}
                 </div>
-                <Button classes="align-end" onClick={() => savePresetHandler()}>
-                    Save preset
+                <Button classes="align-end" onClick={() => saveGroupHandler()}>
+                    Create group
                 </Button>
             </div>
+            <p className="text-xs text-center text-gray-800 italic">
+                To control which sites are automatically opened when clicking on the 'Auto-open' button, right click on the site's icon.
+            </p>
+            <p className="text-xs text-center text-gray-800 italic">
+                To delete a custom group, right click on it.
+            </p>
             <div className="sites flex flex-wrap items-center justify-around">
-                {!presetSites.length &&
+                {!groupSites.length &&
                     sites &&
                     sites.map((site, index) => (
                         <Site
@@ -206,19 +212,23 @@ const Body = () => {
                             toggleStoreHandler={toggleStoreHandler}
                         />
                     ))}
-                {presetSites &&
-                    presetSites.map((site, index) => (
+                {groupSites &&
+                    groupSites.map((site, index) => (
                         <Site
                             site={site}
                             key={index}
                             visitStoreHandler={visitStoreHandler}
-                            toggleStoreHandler={toggleSiteInPresetHandler}
+                            toggleStoreHandler={toggleSiteInGroupHandler}
                         />
                     ))}
             </div>
-            <p className="text-sm text-center text-gray-800 italic">
+            
+            {/* <p className="text-sm text-center text-gray-800 italic">
                 Right click icon to toggle auto-open
             </p>
+            <p className="text-sm text-center text-gray-800 italic">
+                Right click group to delete
+            </p> */}
         </div>
     );
 };

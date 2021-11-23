@@ -8,7 +8,7 @@ export interface SiteStruct {
     id: string;
 }
 
-export interface PresetStruct {
+export interface GroupStruct {
     name: string;
     enabled: string[];
     id: string
@@ -27,7 +27,7 @@ export interface DOMMessageResponse {
 }
 
 export interface DOMMessage { 
-    type: "TEST_MESSAGE"|"GET_SELECTED"|"GET_SITE_INFO"|"ADD_SITE"|"EDIT_SITE"|"REMOVE_SITE"|"IMPORT"|"SAVE_PRESET"|"EDIT_PRESET",
+    type: "TEST_MESSAGE"|"GET_SELECTED"|"GET_SITE_INFO"|"ADD_SITE"|"EDIT_SITE"|"REMOVE_SITE"|"IMPORT"|"SAVE_GROUP"|"EDIT_GROUP",
     // payload?: {
     //     index?: number,
     //     name?: string,
