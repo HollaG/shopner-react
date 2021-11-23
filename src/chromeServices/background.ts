@@ -6,7 +6,12 @@
 //     });
 
 import { handleChromeError, uid } from "../components/functions";
-import { DOMMessage, DOMMessageResponse, SiteStruct } from "../types";
+import {
+    DOMMessage,
+    DOMMessageResponse,
+    PresetStruct,
+    SiteStruct,
+} from "../types";
 
 // });
 
@@ -93,36 +98,149 @@ sites.map((site) => {
 });
 export {};
 
-// Create the entire context menu from a given sites array
-const createContextMenu = (sites: SiteStruct[]) => {
-    // Expect an unsorted array of
-    // Sort by name
-    const sorted = sites.sort((a, b) =>
-        a.name.toLowerCase().localeCompare(b.name.toLowerCase())
-    );
-
-    chrome.contextMenus.create({
-        title: "Search all sites",
-        contexts: ["all"],
-        id: MENUITEM__OPEN_ALL,
-    });
-
-    chrome.contextMenus.create({
-        type: "separator",
-        contexts: ["all"],
-        id: "context_separator",
-    });
-
-    sorted.forEach((site, index) => {
+const createPresetContextMenu = (
+    sites: SiteStruct[],
+    presets: PresetStruct[]
+) => {
+    presets.forEach((preset) => {
         chrome.contextMenus.create({
-            title: site.name,
+            title: `Preset ${preset.name}`,
             contexts: ["all"],
-            id: `context__open_${site.id ? site.id : index}`, // TODO
-            // parentId: "context__open_specific",
-            type: "checkbox",
-            checked: site.enabled,
+            id: `preset__parent_${preset.id}`,
+        });
+        chrome.contextMenus.create({
+            title: "Open preset sites",
+            contexts: ["all"],
+            id: `preset__open_all_${preset.id}`,
+            parentId: `preset__parent_${preset.id}`,
+        });
+        chrome.contextMenus.create({
+            type: "separator",
+            contexts: ["all"],
+            id: `preset_${preset.id}_separator`,
+            parentId: `preset__parent_${preset.id}`,
+        });
+        preset.enabled.forEach((siteId) => {
+            const site = sites.find((site) => site.id === siteId);
+            if (site)
+                chrome.contextMenus.create({
+                    title: site.name,
+                    contexts: ["all"],
+                    id: `context__open_${site.id}_${preset.id}`,
+                    parentId: `preset__parent_${preset.id}`,
+                    // type: "checkbox",
+                    // checked: true,
+                });
         });
     });
+};
+
+// Create the entire context menu
+const createContextMenu = () => {
+    chrome.storage.local.get(["sites", "presets"], function (siteResults) {
+        const sites: SiteStruct[] = siteResults.sites;
+        const presets: PresetStruct[] = siteResults.presets;
+
+        // Sort sites by name
+        const sortedSites = sites.sort((a, b) =>
+            a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+        );
+
+        // Sort presets by name
+        const sortedPresets = presets.sort((a, b) =>
+            a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+        );
+
+        /* Context menu structure
+            - PRESET {preset.name} > 
+                > Open preset sites
+                > << SEPARATOR >>
+                > ✓ Site 1
+                > ✓ Site 2
+                > ✓ Site 3
+            - OPEN ENABLED DEFAULT SITES
+            - << SEPARATOR >>
+            - ✓ Site 1
+            - ✓ Site 2
+            -   Site 3
+            - ✓ Site 4
+        
+        */
+        chrome.contextMenus.removeAll();
+        // Create the preset context menu
+        createPresetContextMenu(sortedSites, sortedPresets);
+
+        // If there are presets, add a separator
+        if (presets.length > 0) {
+            chrome.contextMenus.create({
+                type: "separator",
+                contexts: ["all"],
+                id: "preset_separator",
+            });
+        }
+
+        // Create the default sites context menu
+        chrome.contextMenus.create({
+            title: "Search all enabled sites",
+            contexts: ["all"],
+            id: MENUITEM__OPEN_ALL,
+        });
+
+        // Create the separator
+        chrome.contextMenus.create({
+            type: "separator",
+            contexts: ["all"],
+            id: "context_separator",
+        });
+
+        // Create the list of default sites along with their enabled property
+        sortedSites.forEach((site) => {
+            chrome.contextMenus.create({
+                title: site.name,
+                contexts: ["all"],
+                id: `context__open_${site.id}`,
+                // parentId: "context__open_specific",
+                type: "checkbox",
+                checked: site.enabled,
+            });
+        });
+    });
+
+    // // Expect an unsorted array of
+    // // Sort by name
+    // const sorted = sites.sort((a, b) =>
+    //     a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+    // );
+
+    // // chrome.contextMenus.create({
+    // //     title: "Search all sites",
+    // //     contexts: ["all"],
+    // //     id: MENUITEM__OPEN_ALL,
+    // // });
+    // chrome.contextMenus.create({
+    //     title: "Search all enabled sites",
+    //     contexts: ["all"],
+    //     id: MENUITEM__OPEN_ALL,
+    // });
+
+    // createPresetContextMenu(presets);
+
+    // chrome.contextMenus.create({
+    //     type: "separator",
+    //     contexts: ["all"],
+    //     id: "context_separator",
+    // });
+
+    // sorted.forEach((site) => {
+    //     chrome.contextMenus.create({
+    //         title: site.name,
+    //         contexts: ["all"],
+    //         id: `context__open_${site.id}`,
+    //         // parentId: "context__open_specific",
+    //         type: "checkbox",
+    //         checked: site.enabled,
+    //     });
+    // });
 };
 
 // Listen to storage changes so we can update the "enabled" property of the sites
@@ -132,12 +250,15 @@ chrome.storage &&
             handleChromeError(chrome.runtime.lastError);
         } else {
             console.log({ changes });
+
+            createContextMenu();
             if (changes.sites) {
                 // Delete all the old menu items and add again
                 // Cannot just modify because when the user adds / remove sites, the indexes might change
                 // Todo: possible work on assigning a unique ID to each site which would fix this issue
-                chrome.contextMenus.removeAll();
-                createContextMenu(changes.sites.newValue || []);
+            } else if (changes.presets) {
+                if (changes.presets) {
+                }
             }
         }
         return true;
@@ -163,19 +284,21 @@ chrome.runtime &&
                 });
                 // }
 
-                createContextMenu(userSites);
+                // No need to recreate context menu bc the listener will automatically run when we set up the new sites
+                // createContextMenu(userSites);
+                // createContextMenu()
             });
-            chrome.storage.local.get("presets", function(result) {
+            chrome.storage.local.get("presets", function (result) {
                 // if (result.presets) {
                 //     console.log("Found presets already set:", {
                 //         presets: result.presets,
                 //     });
                 // } else {
-                    chrome.storage.local.set({ presets: [] }, function () {
-                        console.log("Value is set to", { presets: [] });
-                    });
+                chrome.storage.local.set({ presets: [] }, function () {
+                    console.log("Value is set to", { presets: [] });
+                });
                 // }
-            })
+            });
         }
         return true;
     });
@@ -192,75 +315,215 @@ chrome.contextMenus &&
             // Get the selected text
             chrome.tabs.sendMessage(
                 tabId,
-                { type: info.menuItemId } as DOMMessage,
+                {
+                    type: "GET_SELECTED",
+                } as DOMMessage,
                 (response: DOMMessageResponse) => {
-                    const userSites = response.payload.sites;
                     const selected = response.payload.text;
                     const encodedSelected = selected
                         ? encodeURIComponent(selected.trim().toLowerCase())
                         : "";
                     const currentUrl = response.payload.currentUrl || "";
+                    // Get the current sites and presets
+                    chrome.storage.local.get(
+                        ["sites", "presets"],
+                        function (result) {
+                            const sites: SiteStruct[] = result.sites || [];
+                            const presets: PresetStruct[] =
+                                result.presets || [];
 
-                    if (info.menuItemId === MENUITEM__OPEN_ALL) {
-                        // Open all tabs
-                        userSites &&
-                            userSites.forEach((site) => {
-                                const url = selected
-                                    ? site.searchUrl.replaceAll(
-                                          SEARCH_STRING_SUBSTITUTE,
-                                          encodedSelected
-                                      )
-                                    : site.url;
-
-                                // Only open if the site is enabled
-                                // TODO and it doesn't include the term that the user is searching for
-                                // && !currentUrl.includes(encodedSelected);
-
-                                // and the URL doesn't start with the URL we want to open
-                                const shouldOpen =
-                                    site.enabled && !currentUrl.startsWith(url);
-                                shouldOpen &&
-                                    chrome.tabs.create({
-                                        url,
-                                        active: false,
-                                    });
-                            });
-                    } else if (
-                        info.menuItemId.toString().startsWith("context__open_")
-                    ) {
-                        // Open individual site
-
-                        // When the user clicks on an item with a checkbox, the state will be toggled. So, we need to reset the state
-                        chrome.contextMenus.update(info.menuItemId.toString(), {
-                            checked: !info.checked,
-                        });
-
-                        // Open specific tab (menuItemId = "cntext__open_UID")
-                        const siteId = info.menuItemId
-                            .toString()
-                            .split("context__open_")[1];
-                        if (!Number.isNaN(siteId) && userSites) {
-                            // const site = userSites[siteId];
-                            const site = userSites.find(
-                                (site) => site.id === siteId
-                            );
-                            if (site) {
-                                chrome.tabs.create({
-                                    url: selected
+                            if (info.menuItemId === MENUITEM__OPEN_ALL) {
+                                // option: open all enabled sites
+                                sites.forEach((site) => {
+                                    const url = selected
                                         ? site.searchUrl.replaceAll(
                                               SEARCH_STRING_SUBSTITUTE,
-                                              encodeURIComponent(
-                                                  selected.trim().toLowerCase()
-                                              )
+                                              encodedSelected
                                           )
-                                        : site.url,
-                                    active: false,
+                                        : site.url;
+
+                                    // Only open if the site is enabled
+                                    // TODO and it doesn't include the term that the user is searching for
+                                    // && !currentUrl.includes(encodedSelected);
+
+                                    // and the URL doesn't start with the URL we want to open
+                                    const shouldOpen =
+                                        site.enabled &&
+                                        !currentUrl.startsWith(url);
+                                    shouldOpen &&
+                                        chrome.tabs.create({
+                                            url,
+                                            active: false,
+                                        });
                                 });
+                            } else if (
+                                info.menuItemId
+                                    .toString()
+                                    .startsWith("context__open_")
+                            ) {
+                                // Open individual site
+
+                                // When the user clicks on an item with a checkbox, the state will be toggled. So, we need to reset the state
+                                chrome.contextMenus.update(
+                                    info.menuItemId.toString(),
+                                    {
+                                        checked: !info.checked,
+                                    }
+                                );
+
+                                // Open specific tab (menuItemId = "cntext__open_UID") OR (menuItemId = "context__open_UID_PRESET_UID")
+                                const siteId = info.menuItemId
+                                    .toString()
+                                    .replace("context__open_", "")
+                                    .split("_")[0];
+                                if (!Number.isNaN(siteId) && sites) {
+                                    // const site = userSites[siteId];
+                                    const site = sites.find(
+                                        (site) => site.id === siteId
+                                    );
+                                    if (site) {
+                                        chrome.tabs.create({
+                                            url: selected
+                                                ? site.searchUrl.replaceAll(
+                                                      SEARCH_STRING_SUBSTITUTE,
+                                                      encodeURIComponent(
+                                                          selected
+                                                              .trim()
+                                                              .toLowerCase()
+                                                      )
+                                                  )
+                                                : site.url,
+                                            active: false,
+                                        });
+                                    }
+                                }
+                            } else if (
+                                info.menuItemId
+                                    .toString()
+                                    .startsWith("preset__open_all_")
+                            ) {
+                                // menuItemID: preset__open_all_PRESET_UID
+                                const presetId = info.menuItemId
+                                    .toString()
+                                    .replace("preset__open_all_", "")
+                                    .split("_")[0];
+
+                                if (!Number.isNaN(presetId) && presets) {
+                                    // Find the enabled sites in the preset
+                                    const preset = presets.find(
+                                        (preset) => preset.id === presetId
+                                    );
+                                    if (preset) {
+                                        sites.forEach((site) => {
+                                            if (
+                                                preset.enabled.includes(site.id)
+                                            ) {
+                                                // If the site is enabled in the preset, construct the URL and open it
+                                                const url = selected
+                                                    ? site.searchUrl.replaceAll(
+                                                          SEARCH_STRING_SUBSTITUTE,
+                                                          encodedSelected
+                                                      )
+                                                    : site.url;
+                                                const shouldOpen =
+                                                    !currentUrl.startsWith(url);
+                                                shouldOpen &&
+                                                    chrome.tabs.create({
+                                                        url,
+                                                        active: false,
+                                                    });
+                                            }
+                                        });
+                                    }
+                                }
                             }
                         }
-                    }
+                    );
                 }
             );
+
+            // chrome.tabs.sendMessage(
+            //     tabId,
+            //     { type: info.menuItemId } as DOMMessage,
+            //     (response: DOMMessageResponse) => {
+            //         const userSites = response.payload.sites;
+            //         const selected = response.payload.text;
+            //         const encodedSelected = selected
+            //             ? encodeURIComponent(selected.trim().toLowerCase())
+            //             : "";
+            //         const currentUrl = response.payload.currentUrl || "";
+
+            //         if (info.menuItemId === MENUITEM__OPEN_ALL) {
+            //             // option: open all enabled sites
+            //             userSites &&
+            //                 userSites.forEach((site) => {
+            //                     const url = selected
+            //                         ? site.searchUrl.replaceAll(
+            //                               SEARCH_STRING_SUBSTITUTE,
+            //                               encodedSelected
+            //                           )
+            //                         : site.url;
+
+            //                     // Only open if the site is enabled
+            //                     // TODO and it doesn't include the term that the user is searching for
+            //                     // && !currentUrl.includes(encodedSelected);
+
+            //                     // and the URL doesn't start with the URL we want to open
+            //                     const shouldOpen =
+            //                         site.enabled && !currentUrl.startsWith(url);
+            //                     shouldOpen &&
+            //                         chrome.tabs.create({
+            //                             url,
+            //                             active: false,
+            //                         });
+            //                 });
+            //         } else if (
+            //             info.menuItemId.toString().startsWith("context__open_")
+            //         ) {
+            //             // Open individual site
+
+            //             // When the user clicks on an item with a checkbox, the state will be toggled. So, we need to reset the state
+            //             chrome.contextMenus.update(info.menuItemId.toString(), {
+            //                 checked: !info.checked,
+            //             });
+
+            //             // Open specific tab (menuItemId = "cntext__open_UID") OR (menuItemId = "context__open_UID_PRESET_UID")
+            //             const siteId = info.menuItemId
+            //                 .toString()
+            //                 .replace("context__open_", "")
+            //                 .split("_")[0];
+            //             if (!Number.isNaN(siteId) && userSites) {
+            //                 // const site = userSites[siteId];
+            //                 const site = userSites.find(
+            //                     (site) => site.id === siteId
+            //                 );
+            //                 if (site) {
+            //                     chrome.tabs.create({
+            //                         url: selected
+            //                             ? site.searchUrl.replaceAll(
+            //                                   SEARCH_STRING_SUBSTITUTE,
+            //                                   encodeURIComponent(
+            //                                       selected.trim().toLowerCase()
+            //                                   )
+            //                               )
+            //                             : site.url,
+            //                         active: false,
+            //                     });
+            //                 }
+            //             }
+            //         } else if (
+            //             info.menuItemId
+            //                 .toString()
+            //                 .startsWith("preset__open_all_")
+            //         ) {
+            //             // menuItemID: preset__open_all_PRESET_UID
+            //             const presetId = info.menuItemId
+            //                 .toString()
+            //                 .replace("preset__open_all_", "")
+            //                 .split("_")[0];
+            //         }
+            //     }
+            // );
         }
         return true;
     });
