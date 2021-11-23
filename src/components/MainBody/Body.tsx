@@ -1,26 +1,30 @@
 import copy from "fast-copy";
 import { useEffect, useState } from "react";
 import { useChromeStorageLocal } from "use-chrome-storage";
-import { SEARCH_STRING_SUBSTITUTE } from "../chromeServices/background";
+import { SEARCH_STRING_SUBSTITUTE } from "../../chromeServices/background";
 import {
     DOMMessage,
     DOMMessageResponse,
     GroupStruct,
     SiteStruct,
-} from "../types";
-import { handleChromeError, sendMessage } from "./functions";
-import Site from "./Site";
-import Button from "./ui/Button";
-import Chip from "./ui/Chip";
-import Input from "./ui/Input";
+} from "../../types";
+import { handleChromeError, sendMessage } from "../functions";
+import Site from "../Site";
+import Button from "../ui/Button";
+import Chip from "../ui/Chip";
+import Input from "../ui/Input";
+import GroupsContainer from "./GroupsContainer";
+import SearchControls from "./SearchControls";
 // import { sites } from "./Editing/EditingBody";
 
 const defaultGroup: GroupStruct = {
     id: "default",
-    name: "Default",
+    name: "Default Group",
     enabled: [],
 };
-const Body = () => {
+const Body: React.FC<{
+    setIsEditing: (value: React.SetStateAction<boolean>) => void;
+}> = ({ setIsEditing }) => {
     // const [sites, setSites] = useState<Site[]>([]);
 
     const [sites, setSites, _, __]: [SiteStruct[], any, any, any] =
@@ -32,6 +36,9 @@ const Body = () => {
     const [currentUrl, setCurrentUrl] = useState("");
     const [selectedGroup, setSelectedGroup] = useState(defaultGroup);
     const [groupSites, setGroupSites] = useState<SiteStruct[]>([]);
+
+    const [showHelp, setShowHelp] = useState(false);
+
     useEffect(() => {
         // Pass message to content script to get the highlighted text and the current URL
         sendMessage({ type: "GET_SELECTED" })
@@ -67,12 +74,12 @@ const Body = () => {
 
     const visitAllHandler = (event: React.MouseEvent<HTMLButtonElement>) => {
         event.preventDefault();
-        let sitesToVisit: SiteStruct[] = selectedGroup.id === "default" ? sites : groupSites;
+        let sitesToVisit: SiteStruct[] =
+            selectedGroup.id === "default" ? sites : groupSites;
         sitesToVisit.forEach(
-            // Only open if the site is enabled           
+            // Only open if the site is enabled
             (site) => site.enabled && visitStoreHandler(site)
         );
-        
     };
 
     const toggleStoreHandler = (site: SiteStruct) => {
@@ -91,10 +98,18 @@ const Body = () => {
     };
 
     const saveGroupHandler = () => {
+        if (groups.length > 9) { 
+            return
+        }
         // Send request to content script to save the currently enabled sites
         sendMessage({
             type: "SAVE_GROUP",
-        }).catch(console.log);
+        })
+            .then((response) => {
+                const newGroup: GroupStruct = response.payload.group;
+                setSelectedGroup(newGroup);
+            })
+            .catch(console.log);
     };
     const selectGroupHandler = (group: GroupStruct) => {
         // console.log({ group });
@@ -160,47 +175,58 @@ const Body = () => {
     };
     return (
         <div className="body my-2">
-            <div className="search-container flex">
-                <form className="w-full flex">
-                    <Input
-                        id="search-input"
-                        type="text"
-                        placeholder="Search terms"
-                        value={searchTerm}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            setSearchTerm(e.target.value)
-                        }
-                    />
-                    <Button onClick={visitAllHandler}>Auto-open</Button>
-                </form>
-            </div>
-            
-            <div className="group-container flex justify-between my-1">
-                <div className="flex items-center">
-                    <Chip
-                        onClick={() => selectGroupHandler(defaultGroup)}
-                        group={defaultGroup}
-                        selected={selectedGroup.id === "default"}
-                    />
-                    {groups &&
-                        groups.map((group) => (
-                            <Chip
-                                onClick={() => selectGroupHandler(group)}
-                                group={group}
-                                selected={selectedGroup.id === group.id}
-                            />
-                        ))}
-                </div>
-                <Button classes="align-end" onClick={() => saveGroupHandler()}>
-                    Create group
+            <SearchControls
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                visitAllHandler={visitAllHandler}
+            />
+            <div className="buttons-container flex justify-between mt-1">
+                <Button onClick={() => setShowHelp(prev => !prev)}>{showHelp ? "Hide help" : "Show help"}</Button>
+                <Button onClick={() => setIsEditing((prev) => !prev)}>
+                    Edit sites
+                </Button>
+                <Button classes="ml-1" onClick={() => saveGroupHandler()} moreProps={{disabled: (groups.length > 9)}}>
+                    Create Group
                 </Button>
             </div>
-            <p className="text-xs text-center text-gray-800 italic">
-                To control which sites are automatically opened when clicking on the 'Auto-open' button, right click on the site's icon.
-            </p>
-            <p className="text-xs text-center text-gray-800 italic">
-                To delete a custom group, right click on it.
-            </p>
+
+            {showHelp && <div className="help-text text-xs text-center text-gray-800 mt-1">
+                <b> ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯ BASIC USAGE ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯</b>
+                {/* <p> This extension will open sites of your choice with the search term pre-filled, to save you time in manually entering it for each site.</p> */}
+                <p>
+                    To automatically open all sites which are enabled with your search text, click on
+                    <b>"Open all enabled"</b>.
+                </p>
+                <p>
+                    To control which sites are automatically opened, right click
+                    on the <b>respective site's icon</b> to disable it. To re-enable
+                    it, right click again.
+                </p>
+                <b> ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯ GROUPS ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯ </b>
+                {/* <p>
+                    Saving a custom Group allows you to quickly access a custom
+                    configuration of sites. You may click on the Group to
+                    retrieve this configuration at any time.
+                </p> */}
+                <p>
+                    To <b>create</b> a custom Group, set the enabled/disabled sites to
+                    your preference, then click on <b>"Create Group"</b>.
+                </p>
+                <p>To <b>delete</b> a custom Group, right click on it.</p>
+                <p className="text-red-500"> WARNING: Clicking the 'Create Group' button too quickly will cause errors! Additionally, you are limited to <b>10 Groups</b>. </p>
+                {/* <b> ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯ ADVANCED USAGE ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯ </b>
+                <p> By highlighting text and right-clicking, you can access many of this extension's functions from the pop-up menu. </p>
+                <p> Highlighted text will also automatically appear in the input box, so you do not have to re-enter it.</p> */}
+
+            </div>
+}
+            <GroupsContainer
+                groups={groups}
+                defaultGroup={defaultGroup}
+                selectGroupHandler={selectGroupHandler}
+                selectedGroup={selectedGroup}
+            />
+
             <div className="sites flex flex-wrap items-center justify-around">
                 {!groupSites.length &&
                     sites &&
@@ -222,7 +248,7 @@ const Body = () => {
                         />
                     ))}
             </div>
-            
+
             {/* <p className="text-sm text-center text-gray-800 italic">
                 Right click icon to toggle auto-open
             </p>

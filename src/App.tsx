@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import "./App.css";
-import Body from "./components/Body";
+import Body from "./components/MainBody/Body";
 import EditingBody from "./components/Editing/EditingBody";
 import { handleChromeError, sendMessage } from "./components/functions";
 import Header from "./components/Header";
@@ -27,12 +27,12 @@ function App() {
             <Header supported={supported} />
             {supported === 2 && (
                 <>
-                    {isEditing ? <EditingBody /> : <Body />}
-                    <div className="text-center">
+                    {isEditing ? <EditingBody setIsEditing={setIsEditing} /> : <Body setIsEditing={setIsEditing} />}
+                    {/* <div className="text-center">
                         <Button onClick={() => setIsEditing((prev) => !prev)}>
                             {isEditing ? "Go to home" : "Manage links"}
                         </Button>
-                    </div>
+                    </div> */}
                 </>
             )}
             {supported === 1 && (

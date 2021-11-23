@@ -58,7 +58,9 @@ import SiteRow from "./SiteRow";
 //     },
 // ];
 
-const EditingBody = () => {
+const EditingBody: React.FC<{
+    setIsEditing: (value: React.SetStateAction<boolean>) => void;
+}> = ({ setIsEditing }) => {
     // Toggle for showing the 'add a new item' form
     const [showAddNew, setShowAddNew] = useState(false);
 
@@ -122,14 +124,14 @@ const EditingBody = () => {
             const parsed = JSON.parse(importString);
             sendMessage({ type: "IMPORT", payload: { sites: parsed } })
                 .then(() => setShowImport(false))
-                .catch(console.log);            
+                .catch(console.log);
         } catch (e) {
             alert("Invalid JSON!");
         }
     };
     return (
         <div className="body my-2">
-            <div className="flex justify-center buttons mb-2">
+            <div className="flex justify-between buttons">
                 <Button onClick={() => exportHandler()}>Export</Button>
                 <Button
                     classes="mx-1"
@@ -139,6 +141,12 @@ const EditingBody = () => {
                 </Button>
                 <Button onClick={() => showAddNewSiteHandler()}>
                     Add new site
+                </Button>
+            </div>
+
+            <div className="mt-1 flex justify-center">
+                <Button onClick={() => setIsEditing((prev) => !prev)}>
+                    Back to home
                 </Button>
             </div>
             {showAddNew && (

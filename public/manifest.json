@@ -1,6 +1,6 @@
 {
-    "name": "SimpleShopping",
-    "description": "Shopping made Simple!",
+    "name": "SimpleShopping - Easy eCommerce searcher",
+    "description": "Easily open eCommerce sites of your choice with the your search text pre-filled. Supports custom sites!",
     "version": "1.0",
     "manifest_version": 3,
     "action": {

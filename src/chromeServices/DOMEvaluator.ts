@@ -171,24 +171,25 @@ const messagesFromReactAppListener = (
                         function (groupResults) {
                             const groups: GroupStruct[] =
                                 groupResults.groups || [];
+                            const group = {
+                                enabled,
+                                id: uid(),
+                                name: (
+                                    groups.length + 1
+                                ).toString()
+                            }
                             chrome.storage.local.set(
                                 {
                                     groups: [
                                         ...groups,
-                                        {
-                                            enabled,
-                                            id: uid(),
-                                            name: (
-                                                groups.length + 1
-                                            ).toString(),
-                                        },
+                                        group
                                     ],
                                 },
                                 function () {
                                     const response: DOMMessageResponse = {
                                         payload: {
                                             text: selected,
-                                            sites,
+                                            group
                                         },
                                     };
                                     sendResponse(response);

@@ -5,7 +5,7 @@ export const handleChromeError = (error: chrome.runtime.LastError) => {
     console.log("error", error);
 };
 export const uid = function () {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    return performance.now().toString(36) + Math.random().toString(36).substr(2);
 };
 
 export const sendMessage = async (
