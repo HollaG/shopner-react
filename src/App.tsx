@@ -2,10 +2,9 @@ import { useEffect, useState } from "react";
 import "./App.css";
 import Body from "./components/MainBody/Body";
 import EditingBody from "./components/Editing/EditingBody";
-import { handleChromeError, sendMessage } from "./components/functions";
+import { sendMessage } from "./components/functions";
 import Header from "./components/Header";
-import Button from "./components/ui/Button";
-import { DOMMessage, DOMMessageResponse } from "./types";
+
 
 function App() {
     const [isEditing, setIsEditing] = useState(false);
@@ -22,6 +21,7 @@ function App() {
             .catch(() => setSupported(1));
     }, []);
 
+    console.log("app TSX RERENDERING")
     return (
         <div className="App p-3">
             <Header supported={supported} />
@@ -41,7 +41,7 @@ function App() {
                         Sorry, this extension does not work on this page.
                     </p>
                     <p>
-                        Please navigate to a URL that starts with <b>http://</b>
+                        Please navigate to a URL that starts with <b>http://</b>{" "}
                         or <b>https://</b>.
                     </p>
                     <p className="mt-3">

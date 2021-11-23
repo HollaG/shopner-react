@@ -166,64 +166,76 @@ const messagesFromReactAppListener = (
                     const enabled = sites
                         .filter((site) => site.enabled)
                         .map((site) => site.id);
-                    chrome.storage.local.get(
-                        "groups",
-                        function (groupResults) {
-                            const groups: GroupStruct[] =
-                                groupResults.groups || [];
-                            const group = {
-                                enabled,
-                                id: uid(),
-                                name: (
-                                    groups.length + 1
-                                ).toString()
+                    chrome.storage.local.get("groups", function (groupResults) {
+                        const groups: GroupStruct[] = groupResults.groups || [];
+
+                        const latestNumber = groups.length ? groups[groups.length - 1].number + 1 : 1;
+
+                        const group:GroupStruct = {
+                            enabled,
+                            id: uid(),
+                            name: msg.payload.name ? msg.payload.name : (latestNumber).toString(), // If group name specified, set the name, otherwise, set to the highest group number
+                            number: latestNumber
+                        };
+                        chrome.storage.local.set(
+                            {
+                                groups: [...groups, group],
+                            },
+                            function () {
+                                const response: DOMMessageResponse = {
+                                    payload: {
+                                        text: selected,
+                                        group,
+                                    },
+                                };
+                                sendResponse(response);
                             }
-                            chrome.storage.local.set(
-                                {
-                                    groups: [
-                                        ...groups,
-                                        group
-                                    ],
-                                },
-                                function () {
-                                    const response: DOMMessageResponse = {
-                                        payload: {
-                                            text: selected,
-                                            group
-                                        },
-                                    };
-                                    sendResponse(response);
-                                }
-                            );
-                        }
-                    );
+                        );
+                    });
 
                     break;
                 }
 
                 case "EDIT_GROUP": {
                     const updatedGroup = msg.payload.group;
+                    chrome.storage.local.get("groups", function (groupResult) {
+                        // Update the group array
+                        const groups: GroupStruct[] = groupResult.groups || [];
+                        const index = groups.findIndex(
+                            (group) => group.id === updatedGroup.id
+                        );
+                        if (index > -1) groups[index] = updatedGroup;
+                        chrome.storage.local.set({ groups }, function () {
+                            const response: DOMMessageResponse = {
+                                payload: {
+                                    text: selected,
+                                },
+                            };
+                            sendResponse(response);
+                        });
+                    });
+                    break;
+                }
+
+                case "DELETE_GROUP": {
+                    const group: GroupStruct = msg.payload.group;
                     chrome.storage.local.get(
                         "groups",
                         function (groupResult) {
-                            // Update the group array
-                            const groups:GroupStruct[] = groupResult.groups || [];
-                            const index = groups.findIndex(group => group.id === updatedGroup.id);
-                            if (index > -1) groups[index] = updatedGroup;
-                            chrome.storage.local.set({ groups }, function () {
+                            const groups: GroupStruct[] = groupResult.groups || [];
+                            const filtered = groups.filter(oldGroup => oldGroup.id !== group.id);
+                            chrome.storage.local.set({groups: filtered}, function() {
                                 const response: DOMMessageResponse = {
                                     payload: {
                                         text: selected,
-                                       
                                     },
                                 };
                                 sendResponse(response);
-                            });
+                            })
                         }
                     );
                     break;
                 }
-
                 default: {
                     const response: DOMMessageResponse = {
                         payload: {

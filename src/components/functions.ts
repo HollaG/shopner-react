@@ -1,7 +1,7 @@
 import { DOMMessage, DOMMessageResponse } from "../types";
 
 export const handleChromeError = (error: chrome.runtime.LastError) => {
-    alert(`There was an unexpected error: ${error.message}`);
+    // alert(`There was an unexpected error: ${error.message}`);
     console.log("error", error);
 };
 export const uid = function () {

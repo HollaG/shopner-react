@@ -3,24 +3,23 @@ import { useEffect, useState } from "react";
 import { useChromeStorageLocal } from "use-chrome-storage";
 import { SEARCH_STRING_SUBSTITUTE } from "../../chromeServices/background";
 import {
-    DOMMessage,
-    DOMMessageResponse,
+    
     GroupStruct,
     SiteStruct,
 } from "../../types";
-import { handleChromeError, sendMessage } from "../functions";
-import Site from "../Site";
+import { sendMessage } from "../functions";
+import Site from "./Site";
 import Button from "../ui/Button";
-import Chip from "../ui/Chip";
-import Input from "../ui/Input";
+import GroupControls from "./GroupControls";
 import GroupsContainer from "./GroupsContainer";
 import SearchControls from "./SearchControls";
-// import { sites } from "./Editing/EditingBody";
+
 
 const defaultGroup: GroupStruct = {
     id: "default",
     name: "Default Group",
     enabled: [],
+    number: 0,
 };
 const Body: React.FC<{
     setIsEditing: (value: React.SetStateAction<boolean>) => void;
@@ -34,6 +33,8 @@ const Body: React.FC<{
 
     const [searchTerm, setSearchTerm] = useState("");
     const [currentUrl, setCurrentUrl] = useState("");
+
+    const [groupName, setGroupName] = useState("");
     const [selectedGroup, setSelectedGroup] = useState(defaultGroup);
     const [groupSites, setGroupSites] = useState<SiteStruct[]>([]);
 
@@ -96,21 +97,7 @@ const Body: React.FC<{
         }).catch(console.log);
         // No need to update the main `sites` variable because it automatically updates whenever the local storage changes
     };
-
-    const saveGroupHandler = () => {
-        if (groups.length > 9) { 
-            return
-        }
-        // Send request to content script to save the currently enabled sites
-        sendMessage({
-            type: "SAVE_GROUP",
-        })
-            .then((response) => {
-                const newGroup: GroupStruct = response.payload.group;
-                setSelectedGroup(newGroup);
-            })
-            .catch(console.log);
-    };
+    
     const selectGroupHandler = (group: GroupStruct) => {
         // console.log({ group });
         setSelectedGroup(group);
@@ -173,6 +160,8 @@ const Body: React.FC<{
             }).catch(console.log);
         }
     };
+
+    console.log("BODY RE-RENDERNIG")
     return (
         <div className="body my-2">
             <SearchControls
@@ -180,51 +169,72 @@ const Body: React.FC<{
                 setSearchTerm={setSearchTerm}
                 visitAllHandler={visitAllHandler}
             />
-            <div className="buttons-container flex justify-between mt-1">
-                <Button onClick={() => setShowHelp(prev => !prev)}>{showHelp ? "Hide help" : "Show help"}</Button>
-                <Button onClick={() => setIsEditing((prev) => !prev)}>
-                    Edit sites
-                </Button>
-                <Button classes="ml-1" onClick={() => saveGroupHandler()} moreProps={{disabled: (groups.length > 9)}}>
+            <GroupControls
+                groupName={groupName}
+                setGroupName={setGroupName}
+                setSelectedGroup={setSelectedGroup}
+                // saveGroupHandler={saveGroupHandler}
+            />
+            {/* <Button classes="ml-1" onClick={() => saveGroupHandler()} moreProps={{disabled: (groups.length > 9)}}>
                     Create Group
+                </Button> */}
+            <div className="buttons-container flex justify-end mt-1">
+                <Button onClick={() => setShowHelp((prev) => !prev)}>
+                    {showHelp ? "Hide help" : "Show help"}
+                </Button>
+                <Button
+                    classes="ml-1"
+                    onClick={() => setIsEditing((prev) => !prev)}
+                >
+                    Edit sites
                 </Button>
             </div>
 
-            {showHelp && <div className="help-text text-xs text-center text-gray-800 mt-1">
-                <b> ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯ BASIC USAGE ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯</b>
-                {/* <p> This extension will open sites of your choice with the search term pre-filled, to save you time in manually entering it for each site.</p> */}
-                <p>
-                    To automatically open all sites which are enabled with your search text, click on
-                    <b>"Open all enabled"</b>.
-                </p>
-                <p>
-                    To control which sites are automatically opened, right click
-                    on the <b>respective site's icon</b> to disable it. To re-enable
-                    it, right click again.
-                </p>
-                <b> ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯ GROUPS ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯ </b>
-                {/* <p>
+            {showHelp && (
+                <div className="help-text text-xs text-center text-gray-800 mt-1">
+                    <b> ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯ BASIC USAGE ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯</b>
+                    {/* <p> This extension will open sites of your choice with the search term pre-filled, to save you time in manually entering it for each site.</p> */}
+                    <p>
+                        To automatically open all sites which are enabled with
+                        your search text, click on
+                        <b>"Open all enabled"</b>.
+                    </p>
+                    <p>
+                        To control which sites are automatically opened, right
+                        click on the <b>respective site's icon</b> to disable
+                        it. To re-enable it, right click again.
+                    </p>
+                    <b> ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯ GROUPS ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯ </b>
+                    {/* <p>
                     Saving a custom Group allows you to quickly access a custom
                     configuration of sites. You may click on the Group to
                     retrieve this configuration at any time.
                 </p> */}
-                <p>
-                    To <b>create</b> a custom Group, set the enabled/disabled sites to
-                    your preference, then click on <b>"Create Group"</b>.
-                </p>
-                <p>To <b>delete</b> a custom Group, right click on it.</p>
-                <p className="text-red-500"> WARNING: Clicking the 'Create Group' button too quickly will cause errors! Additionally, you are limited to <b>10 Groups</b>. </p>
-                {/* <b> ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯ ADVANCED USAGE ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯ </b>
+                    <p>
+                        To <b>create</b> a custom Group, set the
+                        enabled/disabled sites to your preference, then click on{" "}
+                        <b>"Create Group"</b>.
+                    </p>
+                    <p>
+                        To <b>delete</b> a custom Group, right click on it.
+                    </p>
+                    <p className="text-red-500">
+                        {" "}
+                        WARNING: Clicking the 'Create Group' button too quickly
+                        will cause errors! Additionally, you are limited to{" "}
+                        <b>10 Groups</b>.{" "}
+                    </p>
+                    {/* <b> ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯ ADVANCED USAGE ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯ </b>
                 <p> By highlighting text and right-clicking, you can access many of this extension's functions from the pop-up menu. </p>
                 <p> Highlighted text will also automatically appear in the input box, so you do not have to re-enter it.</p> */}
-
-            </div>
-}
+                </div>
+            )}
             <GroupsContainer
                 groups={groups}
                 defaultGroup={defaultGroup}
                 selectGroupHandler={selectGroupHandler}
                 selectedGroup={selectedGroup}
+                setSelectedGroup={setSelectedGroup}
             />
 
             <div className="sites flex flex-wrap items-center justify-around">

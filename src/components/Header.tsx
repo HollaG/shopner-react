@@ -8,6 +8,7 @@ const Header: React.FC<{ supported: 0 | 1 | 2 }> = ({ supported }) => {
                 <img
                     src={supported === 2 ? logo : logoDisabled}
                     className="w-12 mr-4"
+                    alt="Extension icon - shopping cart"
                 />
             </div>
             <h1 className="app-name-styled text-3xl"> SimpleShopping </h1>

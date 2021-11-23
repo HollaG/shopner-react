@@ -5,8 +5,8 @@ import {
     CUSTOM_SEARCH_INPUT,
     SEARCH_STRING_SUBSTITUTE,
 } from "../../chromeServices/background";
-import { DOMMessage, DOMMessageResponse, SiteStruct } from "../../types";
-import { handleChromeError, sendMessage } from "../functions";
+import { SiteStruct } from "../../types";
+import { sendMessage } from "../functions";
 import ImageWithFallback from "../ui/ImageWithFallback";
 import AddOrEditSite from "./AddOrEditSite";
 

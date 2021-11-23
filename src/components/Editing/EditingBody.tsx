@@ -1,62 +1,11 @@
 import { useEffect, useState } from "react";
 import { useChromeStorageLocal } from "use-chrome-storage";
-import { SEARCH_STRING_SUBSTITUTE } from "../../chromeServices/background";
-import { DOMMessage, DOMMessageResponse, SiteStruct } from "../../types";
-import { handleChromeError, sendMessage } from "../functions";
+import { SiteStruct } from "../../types";
+import { sendMessage } from "../functions";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
 import AddOrEditSite from "./AddOrEditSite";
 import SiteRow from "./SiteRow";
-// export const sites: Site[] = [
-//     {
-//         name: "Shopee",
-//         url: "https://shopee.sg",
-//         searchUrl: `https://shopee.sg/search/?keyword=${SEARCH_STRING_SUBSTITUTE}`,
-//         enabled: true,
-//     },
-//     {
-//         name: "Lazada",
-//         url: "https://lazada.sg",
-//         searchUrl: `https://www.lazada.sg/catalog/?q=${SEARCH_STRING_SUBSTITUTE}`,
-//         enabled: true,
-//     },
-//     {
-//         name: "Qoo10",
-//         url: "https://qoo10.sg",
-//         searchUrl: `https://www.qoo10.sg/s/?keyword=${SEARCH_STRING_SUBSTITUTE}`,
-//         enabled: true,
-//     },
-//     {
-//         name: "Amazon SG",
-//         url: "https://amazon.sg",
-//         searchUrl: `https://www.amazon.sg/s?k=${SEARCH_STRING_SUBSTITUTE}`,
-//         enabled: true,
-//     },
-//     {
-//         name: "AliExpress",
-//         url: "https://www.aliexpress.com",
-//         searchUrl: `https://www.aliexpress.com/wholesale?SearchText=${SEARCH_STRING_SUBSTITUTE}`,
-//         enabled: true,
-//     },
-//     {
-//         name: "ezbuy",
-//         url: "https://ezbuy.sg",
-//         searchUrl: `https://ezbuy.sg/category/?keyWords=${SEARCH_STRING_SUBSTITUTE}`,
-//         enabled: true,
-//     },
-//     {
-//         name: "Zalora",
-//         url: "https://www.zalora.sg",
-//         searchUrl: `https://www.zalora.sg/catalog/?q=${SEARCH_STRING_SUBSTITUTE}`,
-//         enabled: true,
-//     },
-//     {
-//         name: "Carousell",
-//         url: "https://www.carousell.sg",
-//         searchUrl: `https://www.carousell.sg/search/${SEARCH_STRING_SUBSTITUTE}`,
-//         enabled: true,
-//     },
-// ];
 
 const EditingBody: React.FC<{
     setIsEditing: (value: React.SetStateAction<boolean>) => void;
@@ -144,7 +93,7 @@ const EditingBody: React.FC<{
                 </Button>
             </div>
 
-            <div className="mt-1 flex justify-center">
+            <div className="mt-1 flex justify-end">
                 <Button onClick={() => setIsEditing((prev) => !prev)}>
                     Back to home
                 </Button>

@@ -1,5 +1,5 @@
-import { SiteStruct } from "../types";
-import ImageWithFallback from "./ui/ImageWithFallback";
+import { SiteStruct } from "../../types";
+import ImageWithFallback from "../ui/ImageWithFallback";
 
 const Site: React.FC<{
     

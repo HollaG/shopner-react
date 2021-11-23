@@ -98,10 +98,7 @@ sites.map((site) => {
 });
 export {};
 
-const createGroupContextMenu = (
-    sites: SiteStruct[],
-    groups: GroupStruct[]
-) => {
+const createGroupContextMenu = (sites: SiteStruct[], groups: GroupStruct[]) => {
     groups.forEach((group) => {
         chrome.contextMenus.create({
             title: `Group ${group.name}`,
@@ -272,33 +269,30 @@ chrome.runtime &&
         } else {
             // Check if the local storage already contains stuff (i.e. we already loaded it before)
             // If it already has stuff, don't add anything
-            chrome.storage.local.get("sites", function (result) {
-                const userSites: SiteStruct[] = result.sites || sites;
-                // if (result.sites) {
-                //     console.log("Found sites already set:", {
-                //         sites: result.sites,
-                //     });
-                // } else {
-                chrome.storage.local.set({ sites }, function () {
-                    console.log("Value is set to", { sites });
-                });
-                // }
+            chrome.storage.local.get(["sites", "groups"], function (result) {                
+                if (result.sites) {
+                    console.log("Found sites already set:", {
+                        sites: result.sites,
+                    });
+                } else {
+                    chrome.storage.local.set({ sites }, function () {
+                        console.log("Value is set to", { sites });
+                    });
+                }
 
+                if (result.groups) {
+                    console.log("Found groups already set:", {
+                        groups: result.groups,
+                    });
+                } else {
+                    chrome.storage.local.set({ groups: [] }, function () {
+                        console.log("Value is set to", { groups: [] });
+                    });
+                }
                 // No need to recreate context menu bc the listener will automatically run when we set up the new sites
                 // createContextMenu(userSites);
                 // createContextMenu()
-            });
-            chrome.storage.local.get("groups", function (result) {
-                // if (result.groups) {
-                //     console.log("Found groups already set:", {
-                //         groups: result.groups,
-                //     });
-                // } else {
-                chrome.storage.local.set({ groups: [] }, function () {
-                    console.log("Value is set to", { groups: [] });
-                });
-                // }
-            });
+            });            
         }
         return true;
     });
@@ -329,8 +323,7 @@ chrome.contextMenus &&
                         ["sites", "groups"],
                         function (result) {
                             const sites: SiteStruct[] = result.sites || [];
-                            const groups: GroupStruct[] =
-                                result.groups || [];
+                            const groups: GroupStruct[] = result.groups || [];
 
                             if (info.menuItemId === MENUITEM__OPEN_ALL) {
                                 // option: open all enabled sites

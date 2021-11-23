@@ -1,15 +1,23 @@
 import { GroupStruct } from "../../types";
+import { sendMessage } from "../functions";
 import Chip from "../ui/Chip";
 
 const GroupsContainer:React.FC<{
     defaultGroup: GroupStruct,
     selectedGroup: GroupStruct,
+    setSelectedGroup: (group: GroupStruct) => void,
     groups: GroupStruct[],
     selectGroupHandler: (group: GroupStruct) => void
-}> = ({defaultGroup, selectedGroup, groups, selectGroupHandler}) => {
+}> = ({defaultGroup, selectedGroup, groups, selectGroupHandler, setSelectedGroup}) => {
 
     const onDelete = (event: React.MouseEvent<HTMLDivElement, MouseEvent>, group: GroupStruct) => {
         event.preventDefault()
+        sendMessage({
+            type: "DELETE_GROUP",
+            payload: { group }
+        }).then(() => {
+            setSelectedGroup(defaultGroup)
+        }).catch(console.log)
     }
 
     return (
