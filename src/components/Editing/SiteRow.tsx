@@ -13,14 +13,15 @@ import AddOrEditSite from "./AddOrEditSite";
 const SiteRow: React.FC<{ site: SiteStruct }> = ({ site }) => {
     const [editing, setEditing] = useState(false);
 
-    const handleToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
-        // Send message to background script to toggle 'enabled' property
-        site.enabled = e.target.checked;
-        sendMessage({
-            type: "EDIT_SITE",
-            payload: { site },
-        }).catch(console.log);
-    };
+    // Remove the checkboxes to toggle the enabled state to reduce confusion
+    // const handleToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+    //     // Send message to background script to toggle 'enabled' property
+    //     site.enabled = e.target.checked;
+    //     sendMessage({
+    //         type: "EDIT_SITE",
+    //         payload: { site },
+    //     }).catch(console.log);
+    // };
 
     const handleEdit = () => {
         setEditing((prev) => !prev);
@@ -54,15 +55,15 @@ const SiteRow: React.FC<{ site: SiteStruct }> = ({ site }) => {
         <>
             <div className="flex align-middle justify-between mb-2">
                 <div className="left flex items-center">
-                    <input
+                    {/* <input
                         checked={site.enabled}
                         onChange={handleToggle}
                         type="checkbox"
                         className="self-center"
-                    />
+                    /> */}
 
                     <ImageWithFallback
-                        className={`w-6 h-6 object-contain mx-2`}
+                        className={`w-6 h-6 object-contain mr-2`} // Change mr-2 to mx-2 if input is re-added
                         src={`${site.url}/favicon.ico`}
                         fallback={`https://www.google.com/s2/favicons?domain_url=${site.url}`}
                         alt={site.name}
