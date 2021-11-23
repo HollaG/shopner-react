@@ -16,16 +16,13 @@ const messagesFromReactAppListener = (
     if (chrome.runtime.lastError) {
         handleChromeError(chrome.runtime.lastError);
     } else {
-        console.log("[content.js]. Message received", msg);
+        // console.log("[content.js]. Message received", msg);
 
         const selected = window.getSelection()?.toString() || "";
 
         // Get the sites that are stored in the chrome storage api
 
         chrome.storage.local.get("sites", function (result) {
-            console.log("Value currently is ", result.sites);
-
-            console.log("MESSAGE TYPE", msg.type);
             switch (msg.type) {
                 case "GET_SELECTED": {
                     sendResponse({
@@ -44,14 +41,12 @@ const messagesFromReactAppListener = (
                     break;
                 }
                 case "ADD_SITE": {
-                    console.log("SWITCH ADD SITE");
                     const payload: SiteStruct = msg.payload.site;
 
                     const sites = [...result.sites, payload].sort((a, b) =>
                         a.name.localeCompare(b.name)
                     );
                     chrome.storage.local.set({ sites }, function () {
-                        console.log("Value is set to ", { sites });
                         const response: DOMMessageResponse = {
                             payload: {
                                 text: selected,
@@ -82,7 +77,6 @@ const messagesFromReactAppListener = (
                     );
                     sites[index] = site;
                     chrome.storage.local.set({ sites }, function () {
-                        console.log("Value is set to ", { sites });
                         const response: DOMMessageResponse = {
                             payload: {
                                 text: selected,
@@ -96,19 +90,13 @@ const messagesFromReactAppListener = (
                 }
 
                 case "REMOVE_SITE": {
-                    console.log("SWITCH REMOVE SITE");
-
                     const site: SiteStruct = msg.payload.site;
                     const sites: SiteStruct[] = [...result.sites];
                     const filtered = sites.filter(
                         (oldSite) => oldSite.id !== site.id
                     );
 
-                    // if (index >= 0 && index < sites.length) {
-                    //     sites.splice(index, 1);
-                    //     console.log("Spliced sites,", { sites, index });
                     chrome.storage.local.set({ sites: filtered }, function () {
-                        console.log("Value is set to ", { sites });
                         const response: DOMMessageResponse = {
                             payload: {
                                 text: selected,
@@ -123,7 +111,6 @@ const messagesFromReactAppListener = (
                 case "IMPORT": {
                     const sites = msg.payload.sites;
                     chrome.storage.local.set({ sites }, function () {
-                        console.log("Value is set to ", { sites });
                         const response: DOMMessageResponse = {
                             payload: {
                                 text: selected,
@@ -169,13 +156,17 @@ const messagesFromReactAppListener = (
                     chrome.storage.local.get("groups", function (groupResults) {
                         const groups: GroupStruct[] = groupResults.groups || [];
 
-                        const latestNumber = groups.length ? groups[groups.length - 1].number + 1 : 1;
+                        const latestNumber = groups.length
+                            ? groups[groups.length - 1].number + 1
+                            : 1;
 
-                        const group:GroupStruct = {
+                        const group: GroupStruct = {
                             enabled,
                             id: uid(),
-                            name: msg.payload.name ? msg.payload.name : (latestNumber).toString(), // If group name specified, set the name, otherwise, set to the highest group number
-                            number: latestNumber
+                            name: msg.payload.name
+                                ? msg.payload.name
+                                : latestNumber.toString(), // If group name specified, set the name, otherwise, set to the highest group number
+                            number: latestNumber,
                         };
                         chrome.storage.local.set(
                             {
@@ -219,21 +210,23 @@ const messagesFromReactAppListener = (
 
                 case "DELETE_GROUP": {
                     const group: GroupStruct = msg.payload.group;
-                    chrome.storage.local.get(
-                        "groups",
-                        function (groupResult) {
-                            const groups: GroupStruct[] = groupResult.groups || [];
-                            const filtered = groups.filter(oldGroup => oldGroup.id !== group.id);
-                            chrome.storage.local.set({groups: filtered}, function() {
+                    chrome.storage.local.get("groups", function (groupResult) {
+                        const groups: GroupStruct[] = groupResult.groups || [];
+                        const filtered = groups.filter(
+                            (oldGroup) => oldGroup.id !== group.id
+                        );
+                        chrome.storage.local.set(
+                            { groups: filtered },
+                            function () {
                                 const response: DOMMessageResponse = {
                                     payload: {
                                         text: selected,
                                     },
                                 };
                                 sendResponse(response);
-                            })
-                        }
-                    );
+                            }
+                        );
+                    });
                     break;
                 }
                 default: {

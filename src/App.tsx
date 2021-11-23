@@ -5,7 +5,6 @@ import EditingBody from "./components/Editing/EditingBody";
 import { sendMessage } from "./components/functions";
 import Header from "./components/Header";
 
-
 function App() {
     const [isEditing, setIsEditing] = useState(false);
     const [supported, setSupported] = useState<0 | 1 | 2>(0);
@@ -21,13 +20,16 @@ function App() {
             .catch(() => setSupported(1));
     }, []);
 
-    console.log("app TSX RERENDERING")
     return (
         <div className="App p-3">
             <Header supported={supported} />
             {supported === 2 && (
                 <>
-                    {isEditing ? <EditingBody setIsEditing={setIsEditing} /> : <Body setIsEditing={setIsEditing} />}
+                    {isEditing ? (
+                        <EditingBody setIsEditing={setIsEditing} />
+                    ) : (
+                        <Body setIsEditing={setIsEditing} />
+                    )}
                     {/* <div className="text-center">
                         <Button onClick={() => setIsEditing((prev) => !prev)}>
                             {isEditing ? "Go to home" : "Manage links"}

@@ -5,13 +5,15 @@ export const handleChromeError = (error: chrome.runtime.LastError) => {
     console.log("error", error);
 };
 export const uid = function () {
-    return performance.now().toString(36) + Math.random().toString(36).substr(2);
+    return (
+        performance.now().toString(36) + Math.random().toString(36).substr(2)
+    );
 };
 
 export const sendMessage = async (
-    messageDetails: DOMMessage,
+    messageDetails: DOMMessage
     // callback: (response: DOMMessageResponse) => void
-):Promise<DOMMessageResponse> => {
+): Promise<DOMMessageResponse> => {
     return new Promise((resolve, reject) => {
         if (chrome.tabs)
             chrome.tabs.query(
@@ -28,12 +30,9 @@ export const sendMessage = async (
                             tabs[0].id || 0,
                             messageDetails,
                             (response: DOMMessageResponse) => {
-                                console.log(response);
-                                // setChecked(e.target.checked);
-
                                 if (chrome.runtime.lastError) {
                                     handleChromeError(chrome.runtime.lastError);
-                                    reject({error: chrome.runtime.lastError});
+                                    reject({ error: chrome.runtime.lastError });
                                 } else {
                                     resolve(response);
                                 }
@@ -42,6 +41,6 @@ export const sendMessage = async (
                     }
                 }
             );
-        else reject({error: "No tabs"})
+        else reject({ error: "No tabs" });
     });
 };

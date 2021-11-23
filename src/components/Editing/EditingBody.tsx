@@ -15,7 +15,7 @@ const EditingBody: React.FC<{
 
     const [sites, setSites, _, __]: [SiteStruct[], any, any, any] =
         useChromeStorageLocal("sites", []);
-    console.log({ sites }, "SITES IN THE EDITINGBODSY");
+ 
     const [nameValue, setNameValue] = useState("");
     const [urlValue, setUrlValue] = useState("");
 
@@ -60,8 +60,7 @@ const EditingBody: React.FC<{
         try {
             await navigator.clipboard.writeText(JSON.stringify(sites));
             alert("Copied to clipboard!");
-        } catch (e) {
-            alert(e);
+        } catch (e) {           
             console.log(e);
         }
     };
@@ -80,24 +79,27 @@ const EditingBody: React.FC<{
     };
     return (
         <div className="body my-2">
-            <div className="flex justify-between buttons">
-                <Button onClick={() => exportHandler()}>Export</Button>
+            <div className="flex justify-end buttons">
+                {/* <Button onClick={() => exportHandler()}>Export</Button>
                 <Button
                     classes="mx-1"
                     onClick={() => setShowImport((prev) => !prev)}
                 >
                     Import
-                </Button>
+                </Button> */}
                 <Button onClick={() => showAddNewSiteHandler()}>
                     Add new site
                 </Button>
-            </div>
-
-            <div className="mt-1 flex justify-end">
                 <Button onClick={() => setIsEditing((prev) => !prev)}>
                     Back to home
                 </Button>
             </div>
+
+            {/* <div className="mt-1 flex justify-end">
+                <Button onClick={() => setIsEditing((prev) => !prev)}>
+                    Back to home
+                </Button>
+            </div> */}
             {showAddNew && (
                 <AddOrEditSite
                     submitHandler={addSubmitHandler}

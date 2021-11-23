@@ -2,18 +2,13 @@ import copy from "fast-copy";
 import { useEffect, useState } from "react";
 import { useChromeStorageLocal } from "use-chrome-storage";
 import { SEARCH_STRING_SUBSTITUTE } from "../../chromeServices/background";
-import {
-    
-    GroupStruct,
-    SiteStruct,
-} from "../../types";
+import { GroupStruct, SiteStruct } from "../../types";
 import { sendMessage } from "../functions";
 import Site from "./Site";
 import Button from "../ui/Button";
 import GroupControls from "./GroupControls";
 import GroupsContainer from "./GroupsContainer";
 import SearchControls from "./SearchControls";
-
 
 const defaultGroup: GroupStruct = {
     id: "default",
@@ -97,7 +92,7 @@ const Body: React.FC<{
         }).catch(console.log);
         // No need to update the main `sites` variable because it automatically updates whenever the local storage changes
     };
-    
+
     const selectGroupHandler = (group: GroupStruct) => {
         // console.log({ group });
         setSelectedGroup(group);
@@ -133,7 +128,7 @@ const Body: React.FC<{
                 if (site.enabled) enabledSites.push(site);
                 else disabledSites.push(site);
             });
-            console.log({ enabledSites, disabledSites });
+
             setGroupSites([...enabledSites, ...disabledSites]);
         }
     }, [groups, selectedGroup, sites]);
@@ -161,7 +156,6 @@ const Body: React.FC<{
         }
     };
 
-    console.log("BODY RE-RENDERNIG")
     return (
         <div className="body my-2">
             <SearchControls

@@ -34,12 +34,17 @@ const AddOrEditSite: React.FC<{
 
         const name = nameValue.trim();
 
-        console.log("Hey", { urlValue, url, searchUrl, name });
         setNameValue("");
         setUrlValue("");
 
         // If we pass in a site (aka editing), don't generate a new uid, return the current one
-        submitHandler({ url, searchUrl, name, enabled: true, id: site ? site.id : uid() });
+        submitHandler({
+            url,
+            searchUrl,
+            name,
+            enabled: true,
+            id: site ? site.id : uid(),
+        });
     };
 
     const nameValueChangeHandler = (

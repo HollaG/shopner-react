@@ -246,8 +246,6 @@ chrome.storage &&
         if (chrome.runtime.lastError) {
             handleChromeError(chrome.runtime.lastError);
         } else {
-            console.log({ changes });
-
             createContextMenu();
             if (changes.sites) {
                 // Delete all the old menu items and add again
@@ -269,7 +267,7 @@ chrome.runtime &&
         } else {
             // Check if the local storage already contains stuff (i.e. we already loaded it before)
             // If it already has stuff, don't add anything
-            chrome.storage.local.get(["sites", "groups"], function (result) {                
+            chrome.storage.local.get(["sites", "groups"], function (result) {
                 if (result.sites) {
                     console.log("Found sites already set:", {
                         sites: result.sites,
@@ -292,7 +290,7 @@ chrome.runtime &&
                 // No need to recreate context menu bc the listener will automatically run when we set up the new sites
                 // createContextMenu(userSites);
                 // createContextMenu()
-            });            
+            });
         }
         return true;
     });
@@ -304,7 +302,6 @@ chrome.contextMenus &&
             handleChromeError(chrome.runtime.lastError);
         } else if (tab) {
             const tabId = tab.id || 0;
-            console.log({ tabId, type: info.menuItemId });
 
             // Get the selected text
             chrome.tabs.sendMessage(
