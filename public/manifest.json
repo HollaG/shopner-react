@@ -1,11 +1,11 @@
 {
-    "name": "Shopner",
-    "description": "Shopner: Your shopping partner",
+    "name": "SimpleShopping",
+    "description": "Shopping made Simple!",
     "version": "1.0",
     "manifest_version": 3,
     "action": {
         "default_popup": "index.html",
-        "default_title": "Shopner"
+        "default_title": "SimpleShopping"
         
     },
     

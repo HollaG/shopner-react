@@ -1,6 +1,11 @@
-import { handleChromeError } from "../components/functions";
+import { handleChromeError, uid } from "../components/functions";
 
-import { DOMMessage, DOMMessageResponse, SiteStruct } from "../types";
+import {
+    DOMMessage,
+    DOMMessageResponse,
+    PresetStruct,
+    SiteStruct,
+} from "../types";
 
 // Function called when a new message is received
 const messagesFromReactAppListener = (
@@ -129,19 +134,95 @@ const messagesFromReactAppListener = (
                     });
                     break;
                 }
+                // case "GET_PRESETS": {
+                //     chrome.storage.local.get("presets", function (result) {
+                //         // Testing presets
+                //         const testing: PresetStruct[] = [
+                //             {
+                //                 name: "Test",
+                //                 enabled: ["all"],
+                //                 id: "test",
+                //             },
+
+                //             {
+                //                 name: "Test2",
+                //                 enabled: ["all"],
+                //                 id: "test2",
+                //             },
+                //         ];
+                //         const response: DOMMessageResponse = {
+                //             payload: {
+                //                 presets: result.presets || testing,
+                //             },
+                //         };
+                //         sendResponse(response);
+                //     });
+                //     break;
+                // }
                 case "SAVE_PRESET": {
-                    chrome.storage.local.get("sites", function (result) {
-                        const sites = result.sites;
-                        chrome.storage.local.get(
-                            "presets",
-                            function (presetResult) {
-                                const presets = presetResult.presets;
-                                let newPresets = {};
-                            }
-                        );
-                    });
+                    // Save the current arrangement of enabled / disabled sites as a preset
+
+                    const sites: SiteStruct[] = result.sites;
+                    const enabled = sites
+                        .filter((site) => site.enabled)
+                        .map((site) => site.id);
+                    chrome.storage.local.get(
+                        "presets",
+                        function (presetResults) {
+                            const presets: PresetStruct[] =
+                                presetResults.presets || [];
+                            chrome.storage.local.set(
+                                {
+                                    presets: [
+                                        ...presets,
+                                        {
+                                            enabled,
+                                            id: uid(),
+                                            name: (
+                                                presets.length + 1
+                                            ).toString(),
+                                        },
+                                    ],
+                                },
+                                function () {
+                                    const response: DOMMessageResponse = {
+                                        payload: {
+                                            text: selected,
+                                            sites,
+                                        },
+                                    };
+                                    sendResponse(response);
+                                }
+                            );
+                        }
+                    );
+
                     break;
                 }
+
+                case "EDIT_PRESET": {
+                    const updatedPreset = msg.payload.preset;
+                    chrome.storage.local.get(
+                        "presets",
+                        function (presetResult) {
+                            // Update the preset array
+                            const presets:PresetStruct[] = presetResult.presets || [];
+                            const index = presets.findIndex(preset => preset.id === updatedPreset.id);
+                            if (index > -1) presets[index] = updatedPreset;
+                            chrome.storage.local.set({ presets }, function () {
+                                const response: DOMMessageResponse = {
+                                    payload: {
+                                        text: selected,
+                                       
+                                    },
+                                };
+                                sendResponse(response);
+                            });
+                        }
+                    );
+                    break;
+                }
+
                 default: {
                     const response: DOMMessageResponse = {
                         payload: {

@@ -9,7 +9,9 @@ export interface SiteStruct {
 }
 
 export interface PresetStruct {
-
+    name: string;
+    enabled: string[];
+    id: string
 }
 
 export interface DOMMessageResponse {
@@ -25,7 +27,7 @@ export interface DOMMessageResponse {
 }
 
 export interface DOMMessage { 
-    type: string,
+    type: "TEST_MESSAGE"|"GET_SELECTED"|"GET_SITE_INFO"|"ADD_SITE"|"EDIT_SITE"|"REMOVE_SITE"|"IMPORT"|"SAVE_PRESET"|"EDIT_PRESET",
     // payload?: {
     //     index?: number,
     //     name?: string,

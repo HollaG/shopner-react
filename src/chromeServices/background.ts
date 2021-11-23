@@ -132,11 +132,13 @@ chrome.storage &&
             handleChromeError(chrome.runtime.lastError);
         } else {
             console.log({ changes });
-            // Delete all the old menu items and add again
-            // Cannot just modify because when the user adds / remove sites, the indexes might change
-            // Todo: possible work on assigning a unique ID to each site which would fix this issue
-            chrome.contextMenus.removeAll();
-            createContextMenu(changes.sites.newValue || []);
+            if (changes.sites) {
+                // Delete all the old menu items and add again
+                // Cannot just modify because when the user adds / remove sites, the indexes might change
+                // Todo: possible work on assigning a unique ID to each site which would fix this issue
+                chrome.contextMenus.removeAll();
+                createContextMenu(changes.sites.newValue || []);
+            }
         }
         return true;
     });
@@ -163,6 +165,17 @@ chrome.runtime &&
 
                 createContextMenu(userSites);
             });
+            chrome.storage.local.get("presets", function(result) {
+                // if (result.presets) {
+                //     console.log("Found presets already set:", {
+                //         presets: result.presets,
+                //     });
+                // } else {
+                    chrome.storage.local.set({ presets: [] }, function () {
+                        console.log("Value is set to", { presets: [] });
+                    });
+                // }
+            })
         }
         return true;
     });
