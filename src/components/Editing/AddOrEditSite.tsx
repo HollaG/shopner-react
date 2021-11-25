@@ -10,15 +10,15 @@ import Input from "../ui/Input";
 
 const AddOrEditSite: React.FC<{
     isEditing: boolean;
-    explainer?: string;
+    copiedSuccess?: boolean;
     site?: SiteStruct;
 
     name: string;
     url: string;
     submitHandler: (site: SiteStruct) => void;
-}> = ({ isEditing, site, name, url, submitHandler, explainer }) => {
-    const [urlValue, setUrlValue] = useState(url);
-    const [nameValue, setNameValue] = useState(name);
+}> = ({ isEditing, site, name, url, submitHandler, copiedSuccess }) => {
+    const [urlValue] = useState(url);
+    const [nameValue, setNameValue] = useState(name); // don't autofil the 'name' we get from the website's document.title unless we're editing
     const formSubmitHandler = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
@@ -35,7 +35,7 @@ const AddOrEditSite: React.FC<{
         const name = nameValue.trim();
 
         setNameValue("");
-        setUrlValue("");
+        // setUrlValue("");
 
         // If we pass in a site (aka editing), don't generate a new uid, return the current one
         submitHandler({
@@ -54,28 +54,54 @@ const AddOrEditSite: React.FC<{
         setNameValue(event.target.value);
     };
 
+    console.log({
+        urlValue,
+        disalbed: !urlValue.includes("azbycxdvew") || !nameValue,
+    });
+
     return (
         <form className="add-new m-2" onSubmit={formSubmitHandler}>
-            {!isEditing && explainer && (
-                <div className="text-center">
-                    <p>{explainer}</p>
+            {!isEditing && (
+                <div className="help-text text-xs text-center text-gray-800 my-1">
+                    <b> ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯ ADDING A SITE ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯</b>
+                    <p>
+                        {" "}
+                        In your desired website, search for an item using this
+                        search term: <b>azbycxdvew</b>.
+                    </p>
+                    {copiedSuccess && (
+                        <p>
+                            {" "}
+                            This custom search term has been{" "}
+                            <b>copied to your clipboard</b>.{" "}
+                        </p>
+                    )}
+                    <p>
+                        {" "}
+                        Once searched, open up this extension. Input the
+                        website's name in the input below and click on{" "}
+                        <b>"Add"</b>.
+                    </p>
                 </div>
             )}
-            <div className="flex align-center justify-center items-center">
-                <div className="w-1/4 flex">
-                    <label htmlFor="new__name" className="self-center">
-                        Name (max 50)
-                    </label>
-                </div>
-                <div className="w-3/4">
-                    <Input
-                        value={nameValue}
-                        onChange={nameValueChangeHandler}
-                        id="new__name"
-                    />
-                </div>
+            <div className="flex align-center justify-between items-center">
+                <Input
+                    value={nameValue}
+                    onChange={nameValueChangeHandler}
+                    id="new__name"
+                    placeholder="Site name (max 50 characters)"
+                />
+                <Button
+                    moreProps={{
+                        disabled:
+                            !urlValue.includes("azbycxdvew") || !nameValue,
+                    }}
+                    classes="ml-1"
+                >
+                    {isEditing ? "Edit" : "Add"}
+                </Button>
             </div>
-            <div className="flex align-center justify-center my-1 items-center">
+            {/* <div className="flex align-center justify-center my-1 items-center">
                 <div className="w-1/4 flex">
                     <label htmlFor="new__search" className="self-center">
                         Search URL
@@ -90,13 +116,18 @@ const AddOrEditSite: React.FC<{
                         id="new__search"
                     />
                 </div>
-            </div>
+            </div> */}
 
-            <div className="text-center my-1">
-                <Button moreProps={{ disabled: !(!!nameValue && !!urlValue) }}>
+            {/* <div className="text-center my-1">
+                <Button
+                    moreProps={{
+                        disabled:
+                            !urlValue.includes("azbycxdvew") || !nameValue,
+                    }}
+                >
                     {isEditing ? "Edit" : "Add"}
                 </Button>
-            </div>
+            </div> */}
         </form>
     );
 };

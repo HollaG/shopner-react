@@ -13,35 +13,32 @@ const EditingBody: React.FC<{
     // Toggle for showing the 'add a new item' form
     const [showAddNew, setShowAddNew] = useState(false);
 
-    const [sites, setSites, _, __]: [SiteStruct[], any, any, any] =
+    const [sites]: [SiteStruct[], any, any, any] =
         useChromeStorageLocal("sites", []);
- 
-    const [nameValue, setNameValue] = useState("");
+
+    const [nameValue] = useState("");
     const [urlValue, setUrlValue] = useState("");
 
     useEffect(() => {
         sendMessage({ type: "GET_SITE_INFO" })
             .then((response) => {
-                setNameValue(
-                    response.payload.title
-                        ? response.payload.title.substring(0, 50)
-                        : ""
-                );
+                // TODO - decide if we want to autofill the name value for adding a new site
+                // setNameValue(
+                //     response.payload.title
+                //         ? response.payload.title.substring(0, 50)
+                //         : ""
+                // );
                 setUrlValue(response.payload.searchUrl || "");
             })
             .catch(console.log);
     }, []);
 
-    const [explainer, setExplainer] = useState(
-        'Please search for "azbycxdvew" in the website of your choice. Afterwards, the correct search URL will be auto-filled for you.'
-    );
+    const [copiedSuccess, setCopiedSuccess] = useState(false);
     const showAddNewSiteHandler = async () => {
         setShowAddNew((prev) => !prev);
         try {
             await navigator.clipboard.writeText("azbycxdvew");
-            setExplainer(
-                'Please search for "azbycxdvew" (copied to your clipboard) in the website of your choice. Afterwards, the correct search URL will be auto-filled for you.'
-            );
+            setCopiedSuccess(true);
         } catch (e) {
             console.log(e); // copying failed
         }
@@ -55,15 +52,15 @@ const EditingBody: React.FC<{
             .catch(console.log);
     };
 
-    const exportHandler = async () => {
-        // Copy the site JSON string to clipboard
-        try {
-            await navigator.clipboard.writeText(JSON.stringify(sites));
-            alert("Copied to clipboard!");
-        } catch (e) {           
-            console.log(e);
-        }
-    };
+    // const exportHandler = async () => {
+    //     // Copy the site JSON string to clipboard
+    //     try {
+    //         await navigator.clipboard.writeText(JSON.stringify(sites));
+    //         alert("Copied to clipboard!");
+    //     } catch (e) {
+    //         console.log(e);
+    //     }
+    // };
 
     const [showImport, setShowImport] = useState(false);
     const [importString, setImportString] = useState("");
@@ -79,7 +76,7 @@ const EditingBody: React.FC<{
     };
     return (
         <div className="body my-2">
-            <div className="flex justify-end buttons">
+            <div className="flex justify-end buttons mb-2">
                 {/* <Button onClick={() => exportHandler()}>Export</Button>
                 <Button
                     classes="mx-1"
@@ -90,7 +87,10 @@ const EditingBody: React.FC<{
                 <Button onClick={() => showAddNewSiteHandler()}>
                     Add new site
                 </Button>
-                <Button onClick={() => setIsEditing((prev) => !prev)}>
+                <Button
+                    classes="ml-1"
+                    onClick={() => setIsEditing((prev) => !prev)}
+                >
                     Back to home
                 </Button>
             </div>
@@ -106,7 +106,7 @@ const EditingBody: React.FC<{
                     name={nameValue}
                     url={urlValue}
                     isEditing={false}
-                    explainer={explainer}
+                    copiedSuccess={copiedSuccess}
                 />
             )}
             {showImport && (

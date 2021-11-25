@@ -50,6 +50,9 @@ function App() {
                         Pages with URLs starting with <b>chrome://</b>, and the
                         <b> New Tab </b> page are not supported.
                     </p>
+                    <p className="mt-3">
+                        <b>If you are still facing issues, please refresh the page.</b>
+                    </p>
                 </div>
             )}
             {supported === 0 && <p className="text-center"> Loading... </p>}

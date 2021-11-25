@@ -100,8 +100,12 @@ export {};
 
 const createGroupContextMenu = (sites: SiteStruct[], groups: GroupStruct[]) => {
     groups.forEach((group) => {
+        const title = Number.isNaN(Number(group.name))
+            ? group.name
+            : `Group ${group.name}`;
+
         chrome.contextMenus.create({
-            title: `Group ${group.name}`,
+            title,
             contexts: ["all"],
             id: `group__parent_${group.id}`,
         });

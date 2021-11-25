@@ -26,17 +26,22 @@ const GroupControls: React.FC<{
             })
             .catch(console.log);
     };
+
+    const groupNameHandler = (event: React.ChangeEvent<HTMLInputElement>) => { 
+        if (event.target.value.length <= 50) {
+            setGroupName(event.target.value);
+        }
+
+    }
     return (
         <div className="name-container flex mt-1">
             <form className="w-full flex">
                 <Input
                     id="name-input"
                     type="text"
-                    placeholder="Group name"
+                    placeholder="Group name (max 50 characters)"
                     value={groupName}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setGroupName(e.target.value)
-                    }
+                    onChange={groupNameHandler}
                 />
                 <Button
                     classes="ml-1"
